@@ -1,0 +1,1 @@
+[normal link](/javascript:link)

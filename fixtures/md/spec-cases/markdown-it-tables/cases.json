@@ -1,0 +1,268 @@
+[
+  {
+    "section": "Simple:",
+    "ext": null,
+    "markdown": "| Heading 1 | Heading 2\n| --------- | ---------\n| Cell 1    | Cell 2\n| Cell 3    | Cell 4\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Heading 1</th>\n<th>Heading 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Cell 1</td>\n<td>Cell 2</td>\n</tr>\n<tr>\n<td>Cell 3</td>\n<td>Cell 4</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0001-simple.md"
+  },
+  {
+    "section": "Column alignment:",
+    "ext": null,
+    "markdown": "| Header 1 | Header 2 | Header 3 | Header 4 |\n| :------: | -------: | :------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   | Cell 4   |\n| Cell 5   | Cell 6   | Cell 7   | Cell 8   |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th style=\"text-align:center\">Header 1</th>\n<th style=\"text-align:right\">Header 2</th>\n<th style=\"text-align:left\">Header 3</th>\n<th>Header 4</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center\">Cell 1</td>\n<td style=\"text-align:right\">Cell 2</td>\n<td style=\"text-align:left\">Cell 3</td>\n<td>Cell 4</td>\n</tr>\n<tr>\n<td style=\"text-align:center\">Cell 5</td>\n<td style=\"text-align:right\">Cell 6</td>\n<td style=\"text-align:left\">Cell 7</td>\n<td>Cell 8</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0002-column-alignment.md"
+  },
+  {
+    "section": "Nested emphases:",
+    "ext": null,
+    "markdown": "Header 1|Header 2|Header 3|Header 4\n:-------|:------:|-------:|--------\nCell 1  |Cell 2  |Cell 3  |Cell 4\n*Cell 5*|Cell 6  |Cell 7  |Cell 8\n",
+    "html": "<table>\n<thead>\n<tr>\n<th style=\"text-align:left\">Header 1</th>\n<th style=\"text-align:center\">Header 2</th>\n<th style=\"text-align:right\">Header 3</th>\n<th>Header 4</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:left\">Cell 1</td>\n<td style=\"text-align:center\">Cell 2</td>\n<td style=\"text-align:right\">Cell 3</td>\n<td>Cell 4</td>\n</tr>\n<tr>\n<td style=\"text-align:left\"><em>Cell 5</em></td>\n<td style=\"text-align:center\">Cell 6</td>\n<td style=\"text-align:right\">Cell 7</td>\n<td>Cell 8</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0003-nested-emphases.md"
+  },
+  {
+    "section": "Nested tables inside blockquotes:",
+    "ext": null,
+    "markdown": "> foo|foo\n> ---|---\n> bar|bar\nbaz|baz\n",
+    "html": "<blockquote>\n<table>\n<thead>\n<tr>\n<th>foo</th>\n<th>foo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>bar</td>\n</tr>\n</tbody>\n</table>\n</blockquote>\n<p>baz|baz</p>\n",
+    "file": "0004-nested-tables-inside-blockquotes.md"
+  },
+  {
+    "section": "Minimal one-column:",
+    "ext": null,
+    "markdown": "| foo\n|----\n| test2\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>foo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>test2</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0005-minimal-one-column.md"
+  },
+  {
+    "section": "This is parsed as one big table:",
+    "ext": null,
+    "markdown": "-   foo|foo\n---|---\nbar|bar\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>-   foo</th>\n<th>foo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>bar</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0006-this-is-parsed-as-one-big-table.md"
+  },
+  {
+    "section": "Second line should not contain symbols except \"-\", \":\", \"|\" and \" \":",
+    "ext": null,
+    "markdown": "foo|foo\n-----|-----s\nbar|bar\n",
+    "html": "<p>foo|foo\n-----|-----s\nbar|bar</p>\n",
+    "file": "0007-second-line-should-not-contain-symbols-e.md"
+  },
+  {
+    "section": "Second line should contain \"|\" symbol:",
+    "ext": null,
+    "markdown": "foo|foo\n-----:-----\nbar|bar\n",
+    "html": "<p>foo|foo\n-----:-----\nbar|bar</p>\n",
+    "file": "0008-second-line-should-contain-symbol.md"
+  },
+  {
+    "section": "Second line should not have empty columns in the middle:",
+    "ext": null,
+    "markdown": "foo|foo\n-----||-----\nbar|bar\n",
+    "html": "<p>foo|foo\n-----||-----\nbar|bar</p>\n",
+    "file": "0009-second-line-should-not-have-empty-column.md"
+  },
+  {
+    "section": "Wrong alignment symbol position:",
+    "ext": null,
+    "markdown": "foo|foo\n-----|-::-\nbar|bar\n",
+    "html": "<p>foo|foo\n-----|-::-\nbar|bar</p>\n",
+    "file": "0010-wrong-alignment-symbol-position.md"
+  },
+  {
+    "section": "Title line should contain \"|\" symbol:",
+    "ext": null,
+    "markdown": "foo\n-----|-----\nbar|bar\n",
+    "html": "<p>foo\n-----|-----\nbar|bar</p>\n",
+    "file": "0011-title-line-should-contain-symbol.md"
+  },
+  {
+    "section": "Allow tabs as a separator on 2nd line",
+    "ext": null,
+    "markdown": "|\tfoo\t|\tbar\t|\n|\t---\t|\t---\t|\n|\tbaz\t|\tquux\t|\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>foo</th>\n<th>bar</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>baz</td>\n<td>quux</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0012-allow-tabs-as-a-separator-on-2nd-line.md"
+  },
+  {
+    "section": "Should terminate paragraph:",
+    "ext": null,
+    "markdown": "paragraph\nfoo|foo\n---|---\nbar|bar\n",
+    "html": "<p>paragraph</p>\n<table>\n<thead>\n<tr>\n<th>foo</th>\n<th>foo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>bar</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0013-should-terminate-paragraph.md"
+  },
+  {
+    "section": "Another complicated backticks case",
+    "ext": null,
+    "markdown": "| Heading 1 | Heading 2\n| --------- | ---------\n| Cell 1 | Cell 2\n| \\\\\\`|\\\\\\`\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Heading 1</th>\n<th>Heading 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Cell 1</td>\n<td>Cell 2</td>\n</tr>\n<tr>\n<td>\\`</td>\n<td>\\`</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0014-another-complicated-backticks-case.md"
+  },
+  {
+    "section": "`\\` in tables should not count as escaped backtick",
+    "ext": null,
+    "markdown": "# | 1 | 2\n--|--|--\nx | `\\` | `x`\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>#</th>\n<th>1</th>\n<th>2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td><code>\\</code></td>\n<td><code>x</code></td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0015-in-tables-should-not-count-as-escaped-ba.md"
+  },
+  {
+    "section": "Tables should handle escaped backticks",
+    "ext": null,
+    "markdown": "# | 1 | 2\n--|--|--\nx | \\`\\` | `x`\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>#</th>\n<th>1</th>\n<th>2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>x</td>\n<td>``</td>\n<td><code>x</code></td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0016-tables-should-handle-escaped-backticks.md"
+  },
+  {
+    "section": "An amount of rows might be different across the table (issue #171):",
+    "ext": null,
+    "markdown": "| 1 | 2 |\n| :-----: |  :-----: |\n| 3 | 4 | 5 | 6 |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th style=\"text-align:center\">1</th>\n<th style=\"text-align:center\">2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center\">3</td>\n<td style=\"text-align:center\">4</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0017-an-amount-of-rows-might-be-different-acr.md"
+  },
+  {
+    "section": "An amount of rows might be different across the table #2:",
+    "ext": null,
+    "markdown": "| 1 | 2 | 3 | 4 |\n| :-----: |  :-----: |  :-----: |  :-----: |\n| 5 | 6 |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th style=\"text-align:center\">1</th>\n<th style=\"text-align:center\">2</th>\n<th style=\"text-align:center\">3</th>\n<th style=\"text-align:center\">4</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center\">5</td>\n<td style=\"text-align:center\">6</td>\n<td style=\"text-align:center\"></td>\n<td style=\"text-align:center\"></td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0018-an-amount-of-rows-might-be-different-acr.md"
+  },
+  {
+    "section": "Allow one-column tables (issue #171):",
+    "ext": null,
+    "markdown": "| foo |\n:-----:\n| bar |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th style=\"text-align:center\">foo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center\">bar</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0019-allow-one-column-tables-issue-171.md"
+  },
+  {
+    "section": "Allow indented tables (issue #325):",
+    "ext": null,
+    "markdown": "  | Col1a | Col2a |\n  | ----- | ----- |\n  | Col1b | Col2b |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Col1a</th>\n<th>Col2a</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Col1b</td>\n<td>Col2b</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0020-allow-indented-tables-issue-325.md"
+  },
+  {
+    "section": "Tables should not be indented more than 4 spaces (1st line):",
+    "ext": null,
+    "markdown": "    | Col1a | Col2a |\n  | ----- | ----- |\n  | Col1b | Col2b |\n",
+    "html": "<pre><code>| Col1a | Col2a |\n</code></pre>\n<p>| ----- | ----- |\n| Col1b | Col2b |</p>\n",
+    "file": "0021-tables-should-not-be-indented-more-than-.md"
+  },
+  {
+    "section": "Tables should not be indented more than 4 spaces (2nd line):",
+    "ext": null,
+    "markdown": "  | Col1a | Col2a |\n    | ----- | ----- |\n  | Col1b | Col2b |\n",
+    "html": "<p>| Col1a | Col2a |\n| ----- | ----- |\n| Col1b | Col2b |</p>\n",
+    "file": "0022-tables-should-not-be-indented-more-than-.md"
+  },
+  {
+    "section": "Tables should not be indented more than 4 spaces (3rd line):",
+    "ext": null,
+    "markdown": "  | Col1a | Col2a |\n  | ----- | ----- |\n    | Col1b | Col2b |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Col1a</th>\n<th>Col2a</th>\n</tr>\n</thead>\n</table>\n<pre><code>| Col1b | Col2b |\n</code></pre>\n",
+    "file": "0023-tables-should-not-be-indented-more-than-.md"
+  },
+  {
+    "section": "Allow tables with empty body:",
+    "ext": null,
+    "markdown": "  | Col1a | Col2a |\n  | ----- | ----- |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Col1a</th>\n<th>Col2a</th>\n</tr>\n</thead>\n</table>\n",
+    "file": "0024-allow-tables-with-empty-body.md"
+  },
+  {
+    "section": "Align row should be at least as large as any actual rows:",
+    "ext": null,
+    "markdown": "Col1a | Col1b | Col1c\n----- | -----\nCol2a | Col2b | Col2c\n",
+    "html": "<p>Col1a | Col1b | Col1c\n----- | -----\nCol2a | Col2b | Col2c</p>\n",
+    "file": "0025-align-row-should-be-at-least-as-large-as.md"
+  },
+  {
+    "section": "Escaped pipes inside backticks don't split cells:",
+    "ext": null,
+    "markdown": "| Heading 1 | Heading 2\n| --------- | ---------\n| Cell 1 | Cell 2\n| `Cell 3\\|` | Cell 4\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Heading 1</th>\n<th>Heading 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Cell 1</td>\n<td>Cell 2</td>\n</tr>\n<tr>\n<td><code>Cell 3|</code></td>\n<td>Cell 4</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0026-escaped-pipes-inside-backticks-don-t-spl.md"
+  },
+  {
+    "section": "Escape before escaped Pipes inside backticks don't split cells:",
+    "ext": null,
+    "markdown": "| Heading 1 | Heading 2\n| --------- | ---------\n| Cell 1 | Cell 2\n| `Cell 3\\\\|` | Cell 4\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>Heading 1</th>\n<th>Heading 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Cell 1</td>\n<td>Cell 2</td>\n</tr>\n<tr>\n<td><code>Cell 3\\|</code></td>\n<td>Cell 4</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0027-escape-before-escaped-pipes-inside-backt.md"
+  },
+  {
+    "section": "Regression test for #721, table in a list indented with tabs:",
+    "ext": null,
+    "markdown": "- Level 1\n\n\t- Level 2\n\n\t\t| Column 1 | Column 2 |\n\t\t| -------- | -------- |\n\t\t| abcdefgh | ijklmnop |\n",
+    "html": "<ul>\n<li>\n<p>Level 1</p>\n<ul>\n<li>\n<p>Level 2</p>\n<table>\n<thead>\n<tr>\n<th>Column 1</th>\n<th>Column 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>abcdefgh</td>\n<td>ijklmnop</td>\n</tr>\n</tbody>\n</table>\n</li>\n</ul>\n</li>\n</ul>\n",
+    "file": "0028-regression-test-for-721-table-in-a-list-.md"
+  },
+  {
+    "section": "Table without any columns is not a table, #724",
+    "ext": null,
+    "markdown": "|\n|\n|\n",
+    "html": "<p>|\n|\n|</p>\n",
+    "file": "0029-table-without-any-columns-is-not-a-table.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 198",
+    "ext": null,
+    "markdown": "| foo | bar |\n| --- | --- |\n| baz | bim |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>foo</th>\n<th>bar</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>baz</td>\n<td>bim</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0030-gfm-4-10-tables-extension-example-198.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 199",
+    "ext": null,
+    "markdown": "| abc | defghi |\n:-: | -----------:\nbar | baz\n",
+    "html": "<table>\n<thead>\n<tr>\n<th style=\"text-align:center\">abc</th>\n<th style=\"text-align:right\">defghi</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center\">bar</td>\n<td style=\"text-align:right\">baz</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0031-gfm-4-10-tables-extension-example-199.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 200",
+    "ext": null,
+    "markdown": "| f\\|oo  |\n| ------ |\n| b `\\|` az |\n| b **\\|** im |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>f|oo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>b <code>|</code> az</td>\n</tr>\n<tr>\n<td>b <strong>|</strong> im</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0032-gfm-4-10-tables-extension-example-200.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 201",
+    "ext": null,
+    "markdown": "| abc | def |\n| --- | --- |\n| bar | baz |\n> bar\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n</tbody>\n</table>\n<blockquote>\n<p>bar</p>\n</blockquote>\n",
+    "file": "0033-gfm-4-10-tables-extension-example-201.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 202",
+    "ext": null,
+    "markdown": "| abc | def |\n| --- | --- |\n| bar | baz |\nbar\n\nbar\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n<tr>\n<td>bar</td>\n<td></td>\n</tr>\n</tbody>\n</table>\n<p>bar</p>\n",
+    "file": "0034-gfm-4-10-tables-extension-example-202.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 203",
+    "ext": null,
+    "markdown": "| abc | def |\n| --- |\n| bar |\n",
+    "html": "<p>| abc | def |\n| — |\n| bar |</p>\n",
+    "file": "0035-gfm-4-10-tables-extension-example-203.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 204",
+    "ext": null,
+    "markdown": "| abc | def |\n| --- | --- |\n| bar |\n| bar | baz | boo |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>bar</td>\n<td></td>\n</tr>\n<tr>\n<td>bar</td>\n<td>baz</td>\n</tr>\n</tbody>\n</table>\n",
+    "file": "0036-gfm-4-10-tables-extension-example-204.md"
+  },
+  {
+    "section": "GFM 4.10 Tables (extension), Example 205",
+    "ext": null,
+    "markdown": "| abc | def |\n| --- | --- |\n",
+    "html": "<table>\n<thead>\n<tr>\n<th>abc</th>\n<th>def</th>\n</tr>\n</thead>\n</table>\n",
+    "file": "0037-gfm-4-10-tables-extension-example-205.md"
+  },
+  {
+    "section": "A list takes precedence in case of ambiguity",
+    "ext": null,
+    "markdown": "a | b\n- | -\n1 | 2\n",
+    "html": "<p>a | b</p>\n<ul>\n<li>| -\n1 | 2</li>\n</ul>\n",
+    "file": "0038-a-list-takes-precedence-in-case-of-ambig.md"
+  }
+]

@@ -1,0 +1,107 @@
+[
+  {
+    "section": "markdown-it-strikethrough.txt",
+    "ext": null,
+    "markdown": "~~Strikeout~~\n",
+    "html": "<p><s>Strikeout</s></p>\n",
+    "file": "0001-markdown-it-strikethrough-txt.md"
+  },
+  {
+    "section": "markdown-it-strikethrough.txt",
+    "ext": null,
+    "markdown": "x ~~~~foo~~ bar~~\n",
+    "html": "<p>x <s><s>foo</s> bar</s></p>\n",
+    "file": "0002-markdown-it-strikethrough-txt.md"
+  },
+  {
+    "section": "markdown-it-strikethrough.txt",
+    "ext": null,
+    "markdown": "x ~~foo ~~bar~~~~\n",
+    "html": "<p>x <s>foo <s>bar</s></s></p>\n",
+    "file": "0003-markdown-it-strikethrough-txt.md"
+  },
+  {
+    "section": "markdown-it-strikethrough.txt",
+    "ext": null,
+    "markdown": "x ~~~~foo~~~~\n",
+    "html": "<p>x <s><s>foo</s></s></p>\n",
+    "file": "0004-markdown-it-strikethrough-txt.md"
+  },
+  {
+    "section": "markdown-it-strikethrough.txt",
+    "ext": null,
+    "markdown": "x ~~a ~~foo~~~~~~~~~~~bar~~ b~~\n\nx ~~a ~~foo~~~~~~~~~~~~bar~~ b~~\n",
+    "html": "<p>x <s>a <s>foo</s></s>~~~<s><s>bar</s> b</s></p>\n<p>x <s>a <s>foo</s></s>~~~~<s><s>bar</s> b</s></p>\n",
+    "file": "0005-markdown-it-strikethrough-txt.md"
+  },
+  {
+    "section": "Strikeouts have the same priority as emphases:",
+    "ext": null,
+    "markdown": "**~~test**~~\n\n~~**test~~**\n",
+    "html": "<p><strong>~~test</strong>~~</p>\n<p><s>**test</s>**</p>\n",
+    "file": "0006-strikeouts-have-the-same-priority-as-emp.md"
+  },
+  {
+    "section": "Strikeouts have the same priority as emphases with respect to links:",
+    "ext": null,
+    "markdown": "[~~link]()~~\n\n~~[link~~]()\n",
+    "html": "<p><a href=\"\">~~link</a>~~</p>\n<p>~~<a href=\"\">link~~</a></p>\n",
+    "file": "0007-strikeouts-have-the-same-priority-as-emp.md"
+  },
+  {
+    "section": "Strikeouts have the same priority as emphases with respect to backticks:",
+    "ext": null,
+    "markdown": "~~`code~~`\n\n`~~code`~~\n",
+    "html": "<p>~~<code>code~~</code></p>\n<p><code>~~code</code>~~</p>\n",
+    "file": "0008-strikeouts-have-the-same-priority-as-emp.md"
+  },
+  {
+    "section": "Nested strikeouts:",
+    "ext": null,
+    "markdown": "~~foo ~~bar~~ baz~~\n\n~~f **o ~~o b~~ a** r~~\n",
+    "html": "<p><s>foo <s>bar</s> baz</s></p>\n<p><s>f <strong>o <s>o b</s> a</strong> r</s></p>\n",
+    "file": "0009-nested-strikeouts.md"
+  },
+  {
+    "section": "Should not have a whitespace between text and \"~~\":",
+    "ext": null,
+    "markdown": "foo ~~ bar ~~ baz\n",
+    "html": "<p>foo ~~ bar ~~ baz</p>\n",
+    "file": "0010-should-not-have-a-whitespace-between-tex.md"
+  },
+  {
+    "section": "Should parse strikethrough within link tags:",
+    "ext": null,
+    "markdown": "[~~foo~~]()\n",
+    "html": "<p><a href=\"\"><s>foo</s></a></p>\n",
+    "file": "0011-should-parse-strikethrough-within-link-t.md"
+  },
+  {
+    "section": "Newline should be considered a whitespace:",
+    "ext": null,
+    "markdown": "~~test\n~~\n\n~~\ntest~~\n\n~~\ntest\n~~\n",
+    "html": "<p>~~test\n~~</p>\n<p>~~\ntest~~</p>\n<p>~~\ntest\n~~</p>\n",
+    "file": "0012-newline-should-be-considered-a-whitespac.md"
+  },
+  {
+    "section": "From CommonMark test suite, replacing `**` with our marker:",
+    "ext": null,
+    "markdown": "a~~\"foo\"~~\n",
+    "html": "<p>a~~“foo”~~</p>\n",
+    "file": "0013-from-commonmark-test-suite-replacing-wit.md"
+  },
+  {
+    "section": "Coverage: single tilde",
+    "ext": null,
+    "markdown": "~a~\n",
+    "html": "<p>~a~</p>\n",
+    "file": "0014-coverage-single-tilde.md"
+  },
+  {
+    "section": "Regression test for #742:",
+    "ext": null,
+    "markdown": "-~~~~;~~~~~~\n",
+    "html": "<p>-<s><s>;</s></s>~~</p>\n",
+    "file": "0015-regression-test-for-742.md"
+  }
+]

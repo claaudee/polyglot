@@ -1,0 +1,114 @@
+[
+  {
+    "section": "Encode link destination, decode text inside it:",
+    "ext": null,
+    "markdown": "<http://example.com/α%CE%B2γ%CE%B4>\n",
+    "html": "<p><a href=\"http://example.com/%CE%B1%CE%B2%CE%B3%CE%B4\">http://example.com/αβγδ</a></p>\n",
+    "file": "0001-encode-link-destination-decode-text-insi.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "[foo](http://example.com/α%CE%B2γ%CE%B4)\n",
+    "html": "<p><a href=\"http://example.com/%CE%B1%CE%B2%CE%B3%CE%B4\">foo</a></p>\n",
+    "file": "0002-markdown-it-normalize-txt.md"
+  },
+  {
+    "section": "Keep %25 as is because decoding it may break urls, #720",
+    "ext": null,
+    "markdown": "<https://www.google.com/search?q=hello%2E%252Ehello>\n",
+    "html": "<p><a href=\"https://www.google.com/search?q=hello%2E%252Ehello\">https://www.google.com/search?q=hello.%252Ehello</a></p>\n",
+    "file": "0003-keep-25-as-is-because-decoding-it-may-br.md"
+  },
+  {
+    "section": "Should decode punycode:",
+    "ext": null,
+    "markdown": "<http://xn--n3h.net/>\n",
+    "html": "<p><a href=\"http://xn--n3h.net/\">http://☃.net/</a></p>\n",
+    "file": "0004-should-decode-punycode.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "<http://☃.net/>\n",
+    "html": "<p><a href=\"http://xn--n3h.net/\">http://☃.net/</a></p>\n",
+    "file": "0005-markdown-it-normalize-txt.md"
+  },
+  {
+    "section": "Invalid punycode:",
+    "ext": null,
+    "markdown": "<http://xn--xn.com/>\n",
+    "html": "<p><a href=\"http://xn--xn.com/\">http://xn--xn.com/</a></p>\n",
+    "file": "0006-invalid-punycode.md"
+  },
+  {
+    "section": "Invalid punycode (non-ascii):",
+    "ext": null,
+    "markdown": "<http://xn--γ.com/>\n",
+    "html": "<p><a href=\"http://xn--xn---emd.com/\">http://xn--γ.com/</a></p>\n",
+    "file": "0007-invalid-punycode-non-ascii.md"
+  },
+  {
+    "section": "Two slashes should start a domain:",
+    "ext": null,
+    "markdown": "[](//☃.net/)\n",
+    "html": "<p><a href=\"//xn--n3h.net/\"></a></p>\n",
+    "file": "0008-two-slashes-should-start-a-domain.md"
+  },
+  {
+    "section": "IPv6 address literals should preserve brackets while encoding other components:",
+    "ext": null,
+    "markdown": "[foo](http://[2001:db8::1]:1896/a[b]?x=[y])\n",
+    "html": "<p><a href=\"http://[2001:db8::1]:1896/a%5Bb%5D?x=%5By%5D\">foo</a></p>\n",
+    "file": "0009-ipv6-address-literals-should-preserve-br.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "[foo](//[::ffff:192.0.2.1]/)\n",
+    "html": "<p><a href=\"//[::ffff:192.0.2.1]/\">foo</a></p>\n",
+    "file": "0010-markdown-it-normalize-txt.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "[foo](http://user:password@[2001:db8:0:0:0:0:0:1]:1926/)\n",
+    "html": "<p><a href=\"http://user:password@[2001:db8:0:0:0:0:0:1]:1926/\">foo</a></p>\n",
+    "file": "0011-markdown-it-normalize-txt.md"
+  },
+  {
+    "section": "Don't encode domains in unknown schemas:",
+    "ext": null,
+    "markdown": "[](skype:γγγ)\n",
+    "html": "<p><a href=\"skype:%CE%B3%CE%B3%CE%B3\"></a></p>\n",
+    "file": "0012-don-t-encode-domains-in-unknown-schemas.md"
+  },
+  {
+    "section": "Should support IDN in autolinks:",
+    "ext": null,
+    "markdown": "test http://xn--n3h.net/ foo\n",
+    "html": "<p>test <a href=\"http://xn--n3h.net/\">http://☃.net/</a> foo</p>\n",
+    "file": "0013-should-support-idn-in-autolinks.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "test http://☃.net/ foo\n",
+    "html": "<p>test <a href=\"http://xn--n3h.net/\">http://☃.net/</a> foo</p>\n",
+    "file": "0014-markdown-it-normalize-txt.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "test //xn--n3h.net/ foo\n",
+    "html": "<p>test <a href=\"//xn--n3h.net/\">//☃.net/</a> foo</p>\n",
+    "file": "0015-markdown-it-normalize-txt.md"
+  },
+  {
+    "section": "markdown-it-normalize.txt",
+    "ext": null,
+    "markdown": "test xn--n3h@xn--n3h.net foo\n",
+    "html": "<p>test <a href=\"mailto:xn--n3h@xn--n3h.net\">xn--n3h@☃.net</a> foo</p>\n",
+    "file": "0016-markdown-it-normalize-txt.md"
+  }
+]

@@ -1,0 +1,513 @@
+[
+  {
+    "section": "Issue commonmark/cmark#383:",
+    "ext": null,
+    "markdown": "*****Hello*world****\n",
+    "html": "<p>**<em><strong>Hello<em>world</em></strong></em></p>\n",
+    "file": "0001-issue-commonmark-cmark-383.md"
+  },
+  {
+    "section": "Issue #246.  Double escaping in ALT",
+    "ext": null,
+    "markdown": "![&](#)\n",
+    "html": "<p><img src=\"#\" alt=\"&amp;\"></p>\n",
+    "file": "0002-issue-246-double-escaping-in-alt.md"
+  },
+  {
+    "section": "Strip markdown in ALT tags",
+    "ext": null,
+    "markdown": "![*strip* [markdown __in__ alt](#)](#)\n",
+    "html": "<p><img src=\"#\" alt=\"strip markdown in alt\"></p>\n",
+    "file": "0003-strip-markdown-in-alt-tags.md"
+  },
+  {
+    "section": "Issue #55:",
+    "ext": null,
+    "markdown": "![test]\n\n![test](foo bar)\n",
+    "html": "<p>![test]</p>\n<p>![test](foo bar)</p>\n",
+    "file": "0004-issue-55.md"
+  },
+  {
+    "section": "Reference labels: 'i̇θωkå'.toUpperCase() is 'İΘΩKÅ', but these should still be equivalent",
+    "ext": null,
+    "markdown": "[İϴΩKÅ]\n\n[i̇θωkå]: /url\n",
+    "html": "<p><a href=\"/url\">İϴΩKÅ</a></p>\n",
+    "file": "0005-reference-labels-i-k-touppercase-is-i-k-.md"
+  },
+  {
+    "section": "Reference labels: support ligatures (equivalent according to unicode case folding)",
+    "ext": null,
+    "markdown": "[ﬀﬁﬂ]\n\n[fffifl]: /url\n",
+    "html": "<p><a href=\"/url\">ﬀﬁﬂ</a></p>\n",
+    "file": "0006-reference-labels-support-ligatures-equiv.md"
+  },
+  {
+    "section": "Reference can be interrupted by other rules",
+    "ext": null,
+    "markdown": "[foo]: /url 'title\n - - -\n'\n\n[foo]\n",
+    "html": "<p>[foo]: /url 'title</p>\n<hr>\n<p>’</p>\n<p>[foo]</p>\n",
+    "file": "0007-reference-can-be-interrupted-by-other-ru.md"
+  },
+  {
+    "section": "Escape character in link reference title doesn't escape newlines",
+    "ext": null,
+    "markdown": "[foo]: /url \"\nhello\n\\\n\\\n\\\nworld\n\"\n\n[foo]\n",
+    "html": "<p><a href=\"/url\" title=\"\nhello\n\\\n\\\n\\\nworld\n\">foo</a></p>\n",
+    "file": "0008-escape-character-in-link-reference-title.md"
+  },
+  {
+    "section": "Issue #35. `<` should work as punctuation",
+    "ext": null,
+    "markdown": "an **(:**<br>\n",
+    "html": "<p>an <strong>(:</strong><br></p>\n",
+    "file": "0009-issue-35-should-work-as-punctuation.md"
+  },
+  {
+    "section": "Should unescape only needed things in link destinations/titles:",
+    "ext": null,
+    "markdown": "[test](<\\f\\o\\o\\>\\\\>)\n\n[test](foo \"\\\\\\\"\\b\\a\\r\")\n",
+    "html": "<p><a href=\"%5Cf%5Co%5Co%3E%5C\">test</a></p>\n<p><a href=\"foo\" title=\"\\&quot;\\b\\a\\r\">test</a></p>\n",
+    "file": "0010-should-unescape-only-needed-things-in-li.md"
+  },
+  {
+    "section": "Not a closing tag",
+    "ext": null,
+    "markdown": "</ 123>\n",
+    "html": "<p>&lt;/ 123&gt;</p>\n",
+    "file": "0011-not-a-closing-tag.md"
+  },
+  {
+    "section": "Escaping entities in links:",
+    "ext": null,
+    "markdown": "[](<&quot;> \"&amp;&ouml;\")\n\n[](<\\&quot;> \"\\&amp;\\&ouml;\")\n\n[](<\\\\&quot;> \"\\\\&quot;\\\\&ouml;\")\n",
+    "html": "<p><a href=\"%22\" title=\"&amp;ö\"></a></p>\n<p><a href=\"&amp;quot;\" title=\"&amp;amp;&amp;ouml;\"></a></p>\n<p><a href=\"%5C%22\" title=\"\\&quot;\\ö\"></a></p>\n",
+    "file": "0012-escaping-entities-in-links.md"
+  },
+  {
+    "section": "Checking combination of replaceEntities and unescapeMd:",
+    "ext": null,
+    "markdown": "~~~ &amp;&bad;\\&amp;\\\\&amp;\njust a funny little fence\n~~~\n",
+    "html": "<pre><code class=\"&amp;&amp;bad;&amp;amp;\\&amp;\">just a funny little fence\n</code></pre>\n",
+    "file": "0013-checking-combination-of-replaceentities-.md"
+  },
+  {
+    "section": "Underscore between punctuation chars should be able to close emphasis.",
+    "ext": null,
+    "markdown": "_(hai)_.\n",
+    "html": "<p><em>(hai)</em>.</p>\n",
+    "file": "0014-underscore-between-punctuation-chars-sho.md"
+  },
+  {
+    "section": "Regression test, should not match emphasis markers in different link tags:",
+    "ext": null,
+    "markdown": "[*b]() [c*]()\n",
+    "html": "<p><a href=\"\">*b</a> <a href=\"\">c*</a></p>\n",
+    "file": "0015-regression-test-should-not-match-emphasi.md"
+  },
+  {
+    "section": "Those are two separate blockquotes:",
+    "ext": null,
+    "markdown": " - > foo\n  > bar\n",
+    "html": "<ul>\n<li>\n<blockquote>\n<p>foo</p>\n</blockquote>\n</li>\n</ul>\n<blockquote>\n<p>bar</p>\n</blockquote>\n",
+    "file": "0016-those-are-two-separate-blockquotes.md"
+  },
+  {
+    "section": "Blockquote should terminate itself after paragraph continuation",
+    "ext": null,
+    "markdown": "- list\n    > blockquote\nblockquote continuation\n    - next list item\n",
+    "html": "<ul>\n<li>list\n<blockquote>\n<p>blockquote\nblockquote continuation</p>\n</blockquote>\n<ul>\n<li>next list item</li>\n</ul>\n</li>\n</ul>\n",
+    "file": "0017-blockquote-should-terminate-itself-after.md"
+  },
+  {
+    "section": "Regression test (code block + regular paragraph)",
+    "ext": null,
+    "markdown": ">     foo\n> bar\n",
+    "html": "<blockquote>\n<pre><code>foo\n</code></pre>\n<p>bar</p>\n</blockquote>\n",
+    "file": "0018-regression-test-code-block-regular-parag.md"
+  },
+  {
+    "section": "Regression test (tabs in lists, #830)",
+    "ext": null,
+    "markdown": "1. asd\n    2. asd\n\n---\n\n1. asd\n\t2. asd\n",
+    "html": "<ol>\n<li>asd\n2. asd</li>\n</ol>\n<hr>\n<ol>\n<li>asd\n2. asd</li>\n</ol>\n",
+    "file": "0019-regression-test-tabs-in-lists-830.md"
+  },
+  {
+    "section": "Blockquotes inside indented lists should terminate correctly",
+    "ext": null,
+    "markdown": "   - a\n     > b\n     ```\n     c\n     ```\n   - d\n",
+    "html": "<ul>\n<li>a\n<blockquote>\n<p>b</p>\n</blockquote>\n<pre><code>c\n</code></pre>\n</li>\n<li>d</li>\n</ul>\n",
+    "file": "0020-blockquotes-inside-indented-lists-should.md"
+  },
+  {
+    "section": "Don't output empty class here:",
+    "ext": null,
+    "markdown": "```&#x20;\ntest\n```\n",
+    "html": "<pre><code>test\n</code></pre>\n",
+    "file": "0021-don-t-output-empty-class-here.md"
+  },
+  {
+    "section": "Setext header text supports lazy continuations:",
+    "ext": null,
+    "markdown": " - foo\nbar\n   ===\n",
+    "html": "<ul>\n<li>\n<h1>foo\nbar</h1>\n</li>\n</ul>\n",
+    "file": "0022-setext-header-text-supports-lazy-continu.md"
+  },
+  {
+    "section": "But setext header underline doesn't:",
+    "ext": null,
+    "markdown": " - foo\n   bar\n  ===\n",
+    "html": "<ul>\n<li>foo\nbar\n===</li>\n</ul>\n",
+    "file": "0023-but-setext-header-underline-doesn-t.md"
+  },
+  {
+    "section": "Tabs should be stripped from the beginning of the line",
+    "ext": null,
+    "markdown": " foo\n bar\n\tbaz\n",
+    "html": "<p>foo\nbar\nbaz</p>\n",
+    "file": "0024-tabs-should-be-stripped-from-the-beginni.md"
+  },
+  {
+    "section": "Tabs should not cause hardbreak, EOL tabs aren't stripped in commonmark 0.27",
+    "ext": null,
+    "markdown": "foo1\t\nfoo2    \nbar\n",
+    "html": "<p>foo1\t\nfoo2<br>\nbar</p>\n",
+    "file": "0025-tabs-should-not-cause-hardbreak-eol-tabs.md"
+  },
+  {
+    "section": "List item terminating quote should not be paragraph continuation",
+    "ext": null,
+    "markdown": "1. foo\n   > quote\n2. bar\n",
+    "html": "<ol>\n<li>foo\n<blockquote>\n<p>quote</p>\n</blockquote>\n</li>\n<li>bar</li>\n</ol>\n",
+    "file": "0026-list-item-terminating-quote-should-not-b.md"
+  },
+  {
+    "section": "Link destination cannot contain '<'",
+    "ext": null,
+    "markdown": "[](<foo<bar>)\n\n[](<foo\\<bar>)\n",
+    "html": "<p>[](&lt;foo<bar>)</p>\n<p><a href=\"foo%3Cbar\"></a></p>\n",
+    "file": "0027-link-destination-cannot-contain.md"
+  },
+  {
+    "section": "Link title cannot contain '(' when opened with it",
+    "ext": null,
+    "markdown": "[](url (xxx())\n\n[](url (xxx\\())\n",
+    "html": "<p>[](url (xxx())</p>\n<p><a href=\"url\" title=\"xxx(\"></a></p>\n",
+    "file": "0028-link-title-cannot-contain-when-opened-wi.md"
+  },
+  {
+    "section": "Escaped space is not allowed in link destination, commonmark/CommonMark#493.",
+    "ext": null,
+    "markdown": "[link](a\\ b)\n",
+    "html": "<p>[link](a\\ b)</p>\n",
+    "file": "0029-escaped-space-is-not-allowed-in-link-des.md"
+  },
+  {
+    "section": "Allow EOL in processing instructions, commonmark/commonmark.js#196.",
+    "ext": null,
+    "markdown": "a <?\n?>\n",
+    "html": "<p>a <?\n?></p>\n",
+    "file": "0030-allow-eol-in-processing-instructions-com.md"
+  },
+  {
+    "section": "Allow meta tag in an inline context, commonmark/commonmark-spec#527.",
+    "ext": null,
+    "markdown": "City:\n<span itemprop=\"contentLocation\" itemscope itemtype=\"https://schema.org/City\">\n  <meta itemprop=\"name\" content=\"Springfield\">\n</span>\n",
+    "html": "<p>City:\n<span itemprop=\"contentLocation\" itemscope itemtype=\"https://schema.org/City\">\n<meta itemprop=\"name\" content=\"Springfield\">\n</span></p>\n",
+    "file": "0031-allow-meta-tag-in-an-inline-context-comm.md"
+  },
+  {
+    "section": "Coverage. Directive can terminate paragraph.",
+    "ext": null,
+    "markdown": "a\n<?php\n",
+    "html": "<p>a</p>\n<?php\n",
+    "file": "0032-coverage-directive-can-terminate-paragra.md"
+  },
+  {
+    "section": "Coverage. Nested email autolink (silent mode)",
+    "ext": null,
+    "markdown": "*<foo@bar.com>*\n",
+    "html": "<p><em><a href=\"mailto:foo@bar.com\">foo@bar.com</a></em></p>\n",
+    "file": "0033-coverage-nested-email-autolink-silent-mo.md"
+  },
+  {
+    "section": "Coverage. Unpaired nested backtick (silent mode)",
+    "ext": null,
+    "markdown": "*`foo*\n",
+    "html": "<p><em>`foo</em></p>\n",
+    "file": "0034-coverage-unpaired-nested-backtick-silent.md"
+  },
+  {
+    "section": "Coverage. Should continue scanning after closing \"```\" despite cache",
+    "ext": null,
+    "markdown": "```aaa``bbb``ccc```ddd``eee``\n",
+    "html": "<p><code>aaa``bbb``ccc</code>ddd<code>eee</code></p>\n",
+    "file": "0035-coverage-should-continue-scanning-after-.md"
+  },
+  {
+    "section": "Coverage. Entities.",
+    "ext": null,
+    "markdown": "*&*\n\n*&#x20;*\n\n*&amp;*\n",
+    "html": "<p><em>&amp;</em></p>\n<p><em> </em></p>\n<p><em>&amp;</em></p>\n",
+    "file": "0036-coverage-entities.md"
+  },
+  {
+    "section": "Coverage. Escape.",
+    "ext": null,
+    "markdown": "*\\a*\n",
+    "html": "<p><em>\\a</em></p>\n",
+    "file": "0037-coverage-escape.md"
+  },
+  {
+    "section": "Coverage. parseLinkDestination",
+    "ext": null,
+    "markdown": "[foo](<\nbar>)\n\n[foo](<bar)\n",
+    "html": "<p>[foo](&lt;\nbar&gt;)</p>\n<p>[foo](&lt;bar)</p>\n",
+    "file": "0038-coverage-parselinkdestination.md"
+  },
+  {
+    "section": "Coverage. parseLinkTitle",
+    "ext": null,
+    "markdown": "[foo](bar \"ba)\n\n[foo](bar \"ba\\\nz\")\n",
+    "html": "<p>[foo](bar &quot;ba)</p>\n<p><a href=\"bar\" title=\"ba\\\nz\">foo</a></p>\n",
+    "file": "0039-coverage-parselinktitle.md"
+  },
+  {
+    "section": "Coverage. Image",
+    "ext": null,
+    "markdown": "![test]( x )\n",
+    "html": "<p><img src=\"x\" alt=\"test\"></p>\n",
+    "file": "0040-coverage-image.md"
+  },
+  {
+    "section": "markdown-it-commonmark_extras.txt",
+    "ext": null,
+    "markdown": "![test][foo]\n\n[bar]: 123\n",
+    "html": "<p>![test][foo]</p>\n",
+    "file": "0041-markdown-it-commonmark-extras-txt.md"
+  },
+  {
+    "section": "markdown-it-commonmark_extras.txt",
+    "ext": null,
+    "markdown": "![test][[[\n\n[bar]: 123\n",
+    "html": "<p>![test][[[</p>\n",
+    "file": "0042-markdown-it-commonmark-extras-txt.md"
+  },
+  {
+    "section": "markdown-it-commonmark_extras.txt",
+    "ext": null,
+    "markdown": "![test](\n",
+    "html": "<p>![test](</p>\n",
+    "file": "0043-markdown-it-commonmark-extras-txt.md"
+  },
+  {
+    "section": "Coverage. Link",
+    "ext": null,
+    "markdown": "[test](\n",
+    "html": "<p>[test](</p>\n",
+    "file": "0044-coverage-link.md"
+  },
+  {
+    "section": "Coverage. Reference",
+    "ext": null,
+    "markdown": "[\ntest\\\n]: 123\nfoo\nbar\n",
+    "html": "<p>foo\nbar</p>\n",
+    "file": "0045-coverage-reference.md"
+  },
+  {
+    "section": "markdown-it-commonmark_extras.txt",
+    "ext": null,
+    "markdown": "[\ntest\n]\n",
+    "html": "<p>[\ntest\n]</p>\n",
+    "file": "0046-markdown-it-commonmark-extras-txt.md"
+  },
+  {
+    "section": "markdown-it-commonmark_extras.txt",
+    "ext": null,
+    "markdown": "> [foo]: bar\n[foo]\n",
+    "html": "<blockquote></blockquote>\n<p><a href=\"bar\">foo</a></p>\n",
+    "file": "0047-markdown-it-commonmark-extras-txt.md"
+  },
+  {
+    "section": "Coverage. Tabs in blockquotes.",
+    "ext": null,
+    "markdown": ">\t\ttest\n\n >\t\ttest\n\n  >\t\ttest\n\n> ---\n>\t\ttest\n\n > ---\n >\t\ttest\n\n  > ---\n  >\t\ttest\n\n>\t\t\ttest\n\n >\t\t\ttest\n\n  >\t\t\ttest\n\n> ---\n>\t\t\ttest\n\n > ---\n >\t\t\ttest\n\n  > ---\n  >\t\t\ttest\n",
+    "html": "<blockquote>\n<pre><code>  test\n</code></pre>\n</blockquote>\n<blockquote>\n<pre><code> test\n</code></pre>\n</blockquote>\n<blockquote>\n<pre><code>test\n</code></pre>\n</blockquote>\n<blockquote>\n<hr>\n<pre><code>  test\n</code></pre>\n</blockquote>\n<blockquote>\n<hr>\n<pre><code> test\n</code></pre>\n</blockquote>\n<blockquote>\n<hr>\n<pre><code>test\n</code></pre>\n</blockquote>\n<blockquote>\n<pre><code>  \ttest\n</code></pre>\n</blockquote>\n<blockquote>\n<pre><code> \ttest\n</code></pre>\n</blockquote>\n<blockquote>\n<pre><code>\ttest\n</code></pre>\n</blockquote>\n<blockquote>\n<hr>\n<pre><code>  \ttest\n</code></pre>\n</blockquote>\n<blockquote>\n<hr>\n<pre><code> \ttest\n</code></pre>\n</blockquote>\n<blockquote>\n<hr>\n<pre><code>\ttest\n</code></pre>\n</blockquote>\n",
+    "file": "0048-coverage-tabs-in-blockquotes.md"
+  },
+  {
+    "section": "Coverage. Tabs in lists.",
+    "ext": null,
+    "markdown": "1. \tfoo\n\n\t     bar\n",
+    "html": "<ol>\n<li>\n<p>foo</p>\n<pre><code> bar\n</code></pre>\n</li>\n</ol>\n",
+    "file": "0049-coverage-tabs-in-lists.md"
+  },
+  {
+    "section": "Coverage. Various tags not interrupting blockquotes because of indentation:",
+    "ext": null,
+    "markdown": "> foo\n    - - - -\n\n> foo\n    # not a heading\n",
+    "html": "<blockquote>\n<p>foo\n- - - -</p>\n</blockquote>\n<blockquote>\n<p>foo\n# not a heading</p>\n</blockquote>\n",
+    "file": "0050-coverage-various-tags-not-interrupting-b.md"
+  },
+  {
+    "section": "Coverage, entities with code > 10FFFF. Made this way for compatibility with commonmark.js.",
+    "ext": null,
+    "markdown": "&#x110000;\n\n&#x1100000;\n",
+    "html": "<p>�</p>\n<p>&amp;#x1100000;</p>\n",
+    "file": "0051-coverage-entities-with-code-10ffff-made-.md"
+  },
+  {
+    "section": "Issue #696. Blockquotes should remember their level.",
+    "ext": null,
+    "markdown": ">>> foo\nbar\n>>> baz\n",
+    "html": "<blockquote>\n<blockquote>\n<blockquote>\n<p>foo\nbar\nbaz</p>\n</blockquote>\n</blockquote>\n</blockquote>\n",
+    "file": "0052-issue-696-blockquotes-should-remember-th.md"
+  },
+  {
+    "section": "Issue #696. Blockquotes should stop when outdented from a list.",
+    "ext": null,
+    "markdown": "1. >>> foo\n   bar\nbaz\n   >>> foo\n  >>> bar\n   >>> baz\n",
+    "html": "<ol>\n<li>\n<blockquote>\n<blockquote>\n<blockquote>\n<p>foo\nbar\nbaz\nfoo</p>\n</blockquote>\n</blockquote>\n</blockquote>\n</li>\n</ol>\n<blockquote>\n<blockquote>\n<blockquote>\n<p>bar\nbaz</p>\n</blockquote>\n</blockquote>\n</blockquote>\n",
+    "file": "0053-issue-696-blockquotes-should-stop-when-o.md"
+  },
+  {
+    "section": "Issue #772. Header rule should not interfere with html tags.",
+    "ext": null,
+    "markdown": "<!--\n==\n-->\n\n<pre>\n==\n</pre>\n",
+    "html": "<!--\n==\n-->\n<pre>\n==\n</pre>\n",
+    "file": "0054-issue-772-header-rule-should-not-interfe.md"
+  },
+  {
+    "section": "Softbreak in image description",
+    "ext": null,
+    "markdown": "There is a newline in this image ![here\nit is](https://github.com/executablebooks/)\n",
+    "html": "<p>There is a newline in this image <img src=\"https://github.com/executablebooks/\" alt=\"here\nit is\"></p>\n",
+    "file": "0055-softbreak-in-image-description.md"
+  },
+  {
+    "section": "Hardbreak in image description",
+    "ext": null,
+    "markdown": "There is a newline in this image ![here\\\nit is](https://github.com/executablebooks/)\n",
+    "html": "<p>There is a newline in this image <img src=\"https://github.com/executablebooks/\" alt=\"here\nit is\"></p>\n",
+    "file": "0056-hardbreak-in-image-description.md"
+  },
+  {
+    "section": "Html in image description",
+    "ext": null,
+    "markdown": "![text <textarea> text](image.png)\n",
+    "html": "<p><img src=\"image.png\" alt=\"text &lt;textarea&gt; text\"></p>\n",
+    "file": "0057-html-in-image-description.md"
+  },
+  {
+    "section": "Code in image description (#1142)",
+    "ext": null,
+    "markdown": "![foo *bar* `baz` bla](image.png)\n",
+    "html": "<p><img src=\"image.png\" alt=\"foo bar baz bla\"></p>\n",
+    "file": "0058-code-in-image-description-1142.md"
+  },
+  {
+    "section": "https://github.com/commonmark/commonmark.js/pull/279",
+    "ext": null,
+    "markdown": "&parag;\n\n&para\n\n&para;\n",
+    "html": "<p>&amp;parag;</p>\n<p>&amp;para</p>\n<p>¶</p>\n",
+    "file": "0059-https-github-com-commonmark-commonmark-j.md"
+  },
+  {
+    "section": "Issue #1067. Don't trim non-ASCII whitespaces",
+    "ext": null,
+    "markdown": "# 　U+3000　  \n\n  　U+3000　  \n=\n\n  　U+3000　  \n",
+    "html": "<h1>　U+3000　</h1>\n<h1>　U+3000　</h1>\n<p>　U+3000　</p>\n",
+    "file": "0060-issue-1067-don-t-trim-non-ascii-whitespa.md"
+  },
+  {
+    "section": "Issue #1071. Recognize non-BMP punctuations and symbols",
+    "ext": null,
+    "markdown": "a*a∇*a\n\na*∇a*a\n\na*a𝜵*a\n\na*𝜵a*a\n\na*𐬼a*a\n\na*a𐬼*a\n",
+    "html": "<p>a*a∇*a</p>\n<p>a*∇a*a</p>\n<p>a*a𝜵*a</p>\n<p>a*𝜵a*a</p>\n<p>a*𐬼a*a</p>\n<p>a*a𐬼*a</p>\n",
+    "file": "0061-issue-1071-recognize-non-bmp-punctuation.md"
+  },
+  {
+    "section": "Issue #1144. Comment HTML block (type 2) must not end on a blank line inside a list",
+    "ext": null,
+    "markdown": "1. item\n\n    <!--\n    a\n\n    b\n    -->\n    c\n",
+    "html": "<ol>\n<li>\n<p>item</p>\n <!--\n a\n\n b\n -->\n<p>c</p>\n</li>\n</ol>\n",
+    "file": "0062-issue-1144-comment-html-block-type-2-mus.md"
+  },
+  {
+    "section": "Issue #1144. Comment HTML block spanning a blank line inside a blockquote",
+    "ext": null,
+    "markdown": "> <!--\n> a\n>\n> b\n> -->\n> c\n",
+    "html": "<blockquote>\n<!--\na\n\nb\n-->\n<p>c</p>\n</blockquote>\n",
+    "file": "0063-issue-1144-comment-html-block-spanning-a.md"
+  },
+  {
+    "section": "Backslash before a space (CommonMark 0.31.2 6.1) keeps the backslash literal and does not consume the space, so two trailing spaces still form a hard line break (6.7)",
+    "ext": null,
+    "markdown": "a\\  \nb\n",
+    "html": "<p>a\\<br>\nb</p>\n",
+    "file": "0064-backslash-before-a-space-commonmark-0-31.md"
+  },
+  {
+    "section": "Backslash before a space inside a link destination (CommonMark 0.31.2 6.3) is a literal backslash, and the space ends the destination",
+    "ext": null,
+    "markdown": "[a](/url\\ )\n",
+    "html": "<p><a href=\"/url%5C\">a</a></p>\n",
+    "file": "0065-backslash-before-a-space-inside-a-link-d.md"
+  },
+  {
+    "section": "Backslash before a space in a link destination, followed by a title",
+    "ext": null,
+    "markdown": "[a](/url\\ \"title\")\n",
+    "html": "<p><a href=\"/url%5C\" title=\"title\">a</a></p>\n",
+    "file": "0066-backslash-before-a-space-in-a-link-desti.md"
+  },
+  {
+    "section": "HTML block type 4 (declaration) starts with `<!` plus any ASCII letter, not only uppercase (CommonMark 4.6, start condition 4). A lowercase declaration must interrupt a paragraph.",
+    "ext": null,
+    "markdown": "foo\n<!bar baz>\n",
+    "html": "<p>foo</p>\n<!bar baz>\n",
+    "file": "0067-html-block-type-4-declaration-starts-wit.md"
+  },
+  {
+    "section": "An unclosed link label must not suppress a later code span, #1201. Searching for the label's closing `]` runs the inline rules as a lookahead, which must not disturb code span scanning of the rest of the line.",
+    "ext": null,
+    "markdown": "[foo `bar` baz`\n",
+    "html": "<p>[foo <code>bar</code> baz`</p>\n",
+    "file": "0068-an-unclosed-link-label-must-not-suppress.md"
+  },
+  {
+    "section": "The same holds for an unclosed image label, which uses the same lookahead.",
+    "ext": null,
+    "markdown": "![alt `code` x`\n",
+    "html": "<p>![alt <code>code</code> x`</p>\n",
+    "file": "0069-the-same-holds-for-an-unclosed-image-lab.md"
+  },
+  {
+    "section": "A code span must not be assembled across the end of a link label. Here the only run after the opener is ``` `` ```, so the opener stays literal and the link is valid; measuring that run as a shorter one would swallow `](` into a code span.",
+    "ext": null,
+    "markdown": "[`](``)\n",
+    "html": "<p><a href=\"%60%60\">`</a></p>\n",
+    "file": "0070-a-code-span-must-not-be-assembled-across.md"
+  },
+  {
+    "section": "Same, with the run left outside the link entirely.",
+    "ext": null,
+    "markdown": "[`a](/x)``b\n",
+    "html": "<p><a href=\"/x\">`a</a>``b</p>\n",
+    "file": "0071-same-with-the-run-left-outside-the-link-.md"
+  },
+  {
+    "section": "Code spans still bind more tightly than links, so a code span closing outside the label cancels the link (CommonMark 0.31.2 6.1).",
+    "ext": null,
+    "markdown": "[foo `bar](/url)` baz\n",
+    "html": "<p>[foo <code>bar](/url)</code> baz</p>\n",
+    "file": "0072-code-spans-still-bind-more-tightly-than-.md"
+  },
+  {
+    "section": "No stripping when a code span is all spaces (CommonMark 0.31.2 6.1).",
+    "ext": null,
+    "markdown": "`   `\n",
+    "html": "<p><code>   </code></p>\n",
+    "file": "0073-no-stripping-when-a-code-span-is-all-spa.md"
+  }
+]

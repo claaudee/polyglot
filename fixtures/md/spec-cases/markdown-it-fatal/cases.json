@@ -1,0 +1,37 @@
+[
+  {
+    "section": "Should not throw exception on invalid chars in URL (`*` not allowed in path) [mailformed URI]",
+    "ext": null,
+    "markdown": "[foo](<&#x25;test>)\n",
+    "html": "<p><a href=\"%25test\">foo</a></p>\n",
+    "file": "0001-should-not-throw-exception-on-invalid-ch.md"
+  },
+  {
+    "section": "Should not throw exception on broken utf-8 sequence in URL [mailformed URI]",
+    "ext": null,
+    "markdown": "[foo](%C3)\n",
+    "html": "<p><a href=\"%C3\">foo</a></p>\n",
+    "file": "0002-should-not-throw-exception-on-broken-utf.md"
+  },
+  {
+    "section": "Should not throw exception on broken utf-16 surrogates sequence in URL [mailformed URI]",
+    "ext": null,
+    "markdown": "[foo](&#xD800;)\n",
+    "html": "<p><a href=\"&amp;#xD800;\">foo</a></p>\n",
+    "file": "0003-should-not-throw-exception-on-broken-utf.md"
+  },
+  {
+    "section": "Should not hang comments regexp",
+    "ext": null,
+    "markdown": "foo <!--- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ->\n\nfoo <!------------------------------------------------------------------->\n",
+    "html": "<p>foo &lt;!— xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -&gt;</p>\n<p>foo <!-------------------------------------------------------------------></p>\n",
+    "file": "0004-should-not-hang-comments-regexp.md"
+  },
+  {
+    "section": "Should not hang cdata regexp",
+    "ext": null,
+    "markdown": "foo <![CDATA[ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ]>\n",
+    "html": "<p>foo &lt;![CDATA[ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ]&gt;</p>\n",
+    "file": "0005-should-not-hang-cdata-regexp.md"
+  }
+]
