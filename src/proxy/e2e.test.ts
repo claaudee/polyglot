@@ -40,9 +40,17 @@ const fakeUpstream = (received: Received[]): Server =>
     res.end();
   });
 
+/** Every text the engine was asked to translate. */
+const engineCalls: string[] = [];
+
 /** ru→en tags with EN[], en→ru with «ру:» (Cyrillic, so script detection behaves). */
-const fakeEngine = () =>
-  new MappingEngine("fake", (text, from) => (from === "ru" ? `EN[${text}]` : `«ру:${text}»`));
+const fakeEngine = () => {
+  const engine = new MappingEngine("fake", (text, from) => (from === "ru" ? `EN[${text}]` : `«ру:${text}»`));
+  return {
+    name: engine.name,
+    translate: (...args: Parameters<MappingEngine["translate"]>) => (engineCalls.push(args[0]), engine.translate(...args)),
+  };
+};
 
 const replyText = (stream: string): string =>
   new SseParser()
@@ -156,6 +164,31 @@ describe("proxy end-to-end", () => {
     assert.equal(JSON.parse(received.at(-1)?.body ?? "{}").messages[0].content, "what is in this folder?");
     assert.ok(replyText(stream).startsWith("The folder holds a small project."));
     assert.ok(!stream.includes("ру:"));
+  });
+
+  it("remembers an English speaker's untranslated reply, so it returns as history without a translation", async () => {
+    const reply = "The folder holds a small project.";
+    const first = await post({
+      model: "claude-haiku-5-5",
+      stream: true,
+      messages: [{ role: "user", content: "what is in this folder now?" }],
+    }).then((response) => response.text());
+    assert.ok(replyText(first).startsWith(reply));
+
+    const displayed = replyText(first);
+    engineCalls.length = 0;
+    await post({
+      model: "claude-haiku-5-5",
+      stream: true,
+      messages: [
+        { role: "user", content: "what is in this folder now?" },
+        { role: "assistant", content: [{ type: "text", text: displayed }] },
+        { role: "user", content: "and next?" },
+      ],
+    }).then((response) => response.text());
+
+    assert.equal(JSON.parse(received.at(-1)?.body ?? "{}").messages[1].content[0].text, displayed);
+    assert.deepEqual(engineCalls, ["and next?"], "only the new prompt reaches the engine");
   });
 
   it("relays other endpoints untouched", async () => {

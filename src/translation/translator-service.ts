@@ -85,7 +85,8 @@ export class TranslatorService {
   /** Surrounding whitespace never reaches the model, so block boundaries stay byte-exact. */
   private async translate(text: string, direction: Direction, context: Conversation): Promise<Prompt> {
     const [, lead = "", core = "", trail = ""] = EDGES.exec(text) ?? [];
-    const masked = mask(core);
+    // Prompts keep quoted literals as written; replies are the model's own prose.
+    const masked = mask(core, { quotes: !direction.from });
     if (!needsTranslation(masked.text, direction)) return { text };
 
     const startedAt = performance.now();
@@ -127,10 +128,11 @@ export class TranslatorService {
     const known = this.options.memory.get("prompt", text);
     if (known !== undefined) return { text: known, language: this.options.memory.get("language", text) };
 
+    // Another session may have stored this text first; what memory holds is what every session sends.
     const translated = await this.translate(text, { to: this.model }, context);
-    this.options.memory.set("prompt", text, translated.text);
-    if (translated.language) this.options.memory.set("language", text, translated.language);
-    return translated;
+    const language = translated.language && this.options.memory.set("language", text, translated.language);
+    const stored = this.options.memory.set("prompt", text, translated.text);
+    return language ? { text: stored, language } : { text: stored };
   }
 
   /** Displayed assistant text → the exact original the model produced, or a fresh translation if unknown. */
@@ -139,6 +141,14 @@ export class TranslatorService {
     if (original !== undefined) return original;
     log().debug({ scope: "translate:history", text }, "assistant history not in memory");
     return (await this.toModel(text, context)).text;
+  }
+
+  /**
+   * A reply the user saw exactly as the model wrote it: remembered as its own
+   * original, so it comes back as history without a translation call.
+   */
+  rememberUntranslated(text: string): void {
+    this.options.memory.set("reply", text, text);
   }
 
   /**

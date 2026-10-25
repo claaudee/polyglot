@@ -8,7 +8,7 @@ import { MappingEngine } from "../translation/engine.js";
 import { TranslationMemory } from "../translation/memory.js";
 import { rewriteRequestBody, type RequestTextOps } from "./rewrite-request.js";
 import { SseParser, sseRecord } from "./sse.js";
-import { ReplyStreamRewriter, rewriteResponseBody } from "./stream-rewriter.js";
+import { ReplyRecorder, ReplyStreamRewriter, rewriteResponseBody } from "./stream-rewriter.js";
 import { TranslatorService } from "../translation/translator-service.js";
 
 const roots: string[] = [];
@@ -248,6 +248,47 @@ describe("ReplyStreamRewriter", () => {
     const out = await collect(service, [start(0, "text"), delta(0, "Reply text.\n"), stop(0)]);
     assert.ok(out.includes("ру:Reply text."));
     assert.equal(await service.restoreToModel("«ру:Reply text.»\n"), "Reply text.\n");
+  });
+});
+
+describe("ReplyRecorder", () => {
+  const start = (index: number, type: string): string =>
+    sseRecord("content_block_start", { type: "content_block_start", index, content_block: { type } });
+  const delta = (index: number, type: string, field: string, value: string): string =>
+    sseRecord("content_block_delta", { type: "content_block_delta", index, delta: { type, [field]: value } });
+  const stop = (index: number): string => sseRecord("content_block_stop", { type: "content_block_stop", index });
+
+  it("relays every chunk at once and unchanged, reporting each finished text block", async () => {
+    const stream = [
+      start(0, "thinking"),
+      delta(0, "thinking_delta", "thinking", "hmm"),
+      stop(0),
+      start(1, "text"),
+      delta(1, "text_delta", "text", "Hello, "),
+      delta(1, "text_delta", "text", "world.\n\nSecond"),
+      delta(1, "text_delta", "text", " paragraph."),
+      stop(1),
+      start(2, "tool_use"),
+      delta(2, "input_json_delta", "partial_json", "{}"),
+      stop(2),
+    ].join("");
+    // Slices cut records apart, as a socket would.
+    const chunks = Array.from({ length: Math.ceil(stream.length / 13) }, (_, at) => stream.slice(at * 13, at * 13 + 13));
+    const texts: string[] = [];
+    const recorder = new ReplyRecorder((text) => texts.push(text));
+    const relayed: string[] = [];
+    let ahead = 0;
+    for await (const chunk of recorder.transform((async function* () {
+      for (const chunk of chunks) {
+        ahead++;
+        yield chunk;
+      }
+    })())) {
+      assert.equal(ahead, relayed.length + 1, "each chunk goes out before the next one is read");
+      relayed.push(chunk);
+    }
+    assert.deepEqual(relayed, chunks);
+    assert.deepEqual(texts, ["Hello, world.\n\nSecond paragraph."]);
   });
 });
 

@@ -111,6 +111,15 @@ describe("mask", () => {
     assert.equal(restore(masked, masked.text), source);
   });
 
+  it("keeps quoted literals of prompts verbatim, and only on request", () => {
+    const source = 'Создай файл с текстом «Привет, мир», „так“, “так” и "так", но не "вот\nэто".';
+    const masked = mask(source, { quotes: true });
+    assert.deepEqual(masked.slots, ["«Привет, мир»", "„так“", "“так”", '"так"']);
+    assert.ok(masked.text.includes('"вот\nэто"'), "a quote never spans lines");
+    assert.equal(restore(masked, masked.text), source);
+    assert.deepEqual(mask(source).slots, []);
+  });
+
   it("rejects translations that lose or duplicate placeholders", () => {
     const masked = mask("Use `a` and `b`.\n");
     assert.equal(masked.slots.length, 2);

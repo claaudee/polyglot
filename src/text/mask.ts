@@ -62,7 +62,29 @@ const TEXT_PATTERNS: readonly RegExp[] = [
   /(?<![\w:]):[a-z0-9_+-]*[a-z][a-z0-9_+-]*:(?![\w:])/, // :emoji:
 ];
 
-const TEXT_PATTERN = new RegExp(TEXT_PATTERNS.map((pattern) => `(?:${pattern.source})`).join("|"), "g");
+/**
+ * Quoted text in a prompt is usually literal: what to write into a file,
+ * search for or name something. The model reads it in the user's language
+ * fine; translated, it would end up in the user's files in English. Within
+ * one line, so a stray quote never swallows a paragraph.
+ */
+const QUOTE_PATTERNS: readonly RegExp[] = [
+  /«[^«»\n]+»/, // «ёлочки»
+  /„[^„“”\n]+[“”]/, // „лапки“
+  /“[^“”\n]+”/, // “curly”
+  /"[^"\n]+"/, // "straight"
+];
+
+const anyOf = (patterns: readonly RegExp[]): RegExp =>
+  new RegExp(patterns.map((pattern) => `(?:${pattern.source})`).join("|"), "g");
+
+const TEXT_PATTERN = anyOf(TEXT_PATTERNS);
+const TEXT_AND_QUOTE_PATTERN = anyOf([...QUOTE_PATTERNS, ...TEXT_PATTERNS]);
+
+export interface MaskOptions {
+  /** Also keep quoted text verbatim: for prompts, where quotes mark literals. */
+  readonly quotes?: boolean;
+}
 
 /** Index of `needle` in `src[from, to)`, or -1. */
 const locate = (src: string, needle: string, from: number, to: number): number => {
@@ -148,9 +170,9 @@ const gaps = (spans: readonly Span[], length: number): readonly Span[] => {
   return out;
 };
 
-const textSpans = (src: string, protectedSpans: readonly Span[]): readonly Span[] =>
+const textSpans = (src: string, protectedSpans: readonly Span[], pattern: RegExp): readonly Span[] =>
   gaps(protectedSpans, src.length).flatMap(([start, end]) =>
-    [...src.slice(start, end).matchAll(TEXT_PATTERN)].map(
+    [...src.slice(start, end).matchAll(pattern)].map(
       (match): Span => [start + match.index, start + match.index + match[0].length]
     )
   );
@@ -176,9 +198,12 @@ const structuralSpans = (src: string): readonly Span[] => {
 };
 
 /** Replaces everything untranslatable in `src` with `⟦n⟧` placeholders. */
-export const mask = (src: string): Masked => {
+export const mask = (src: string, options: MaskOptions = {}): Masked => {
   const structural = merge(structuralSpans(src));
-  const spans = merge([...structural, ...textSpans(src, structural)]);
+  const spans = merge([
+    ...structural,
+    ...textSpans(src, structural, options.quotes ? TEXT_AND_QUOTE_PATTERN : TEXT_PATTERN),
+  ]);
   const parts: string[] = [];
   let last = 0;
   spans.forEach(([start, end], index) => {

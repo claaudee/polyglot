@@ -138,6 +138,46 @@ export class ReplyStreamRewriter {
 }
 
 /**
+ * For replies that are not translated (the user writes in the model's
+ * language): relays every chunk the moment it arrives, byte for byte, and
+ * reads the stream on the side only to report each finished top-level
+ * `text` block, so its exact text can be remembered as history.
+ */
+export class ReplyRecorder {
+  private readonly blocks = new Map<number, string>();
+
+  constructor(private readonly onText: (text: string) => void) {}
+
+  private read(record: SseRecord): void {
+    const event = record.data as StreamEvent | undefined;
+    const index = event?.index ?? -1;
+    if (event?.type === "content_block_start" && event.content_block?.type === "text") this.blocks.set(index, "");
+    const text = this.blocks.get(index);
+    if (text === undefined) return;
+    if (event?.type === "content_block_delta" && event.delta?.type === "text_delta")
+      this.blocks.set(index, text + (event.delta.text ?? ""));
+    if (event?.type === "content_block_stop") {
+      this.blocks.delete(index);
+      if (text !== "") this.onText(text);
+    }
+  }
+
+  async *transform<C extends Uint8Array | string>(chunks: AsyncIterable<C>): AsyncGenerator<C> {
+    const parser = new SseParser();
+    const decoder = new TextDecoder();
+    for await (const chunk of chunks) {
+      yield chunk;
+      try {
+        for (const record of parser.push(typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true })))
+          this.read(record);
+      } catch (error) {
+        debugLog("proxy:record", error);
+      }
+    }
+  }
+}
+
+/**
  * Non-streaming variant: translates `content[].text` of a complete
  * Messages API response.
  */

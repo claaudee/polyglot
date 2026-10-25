@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DEFAULT_SCOPES } from "../text/scopes.js";
 import type { Translation, TranslationEngine } from "./engine.js";
-import { TranslationMemory } from "./memory.js";
+import { IN_MEMORY, TranslationMemory } from "./memory.js";
 import { TranslatorService } from "./translator-service.js";
 
 interface Call {
@@ -31,7 +31,7 @@ const fromRussian = (map: (text: string) => string) => scripted(({ text }) => ({
 const serviceWith = (engine: TranslationEngine) =>
   new TranslatorService({
     scopes: DEFAULT_SCOPES,
-    memory: new TranslationMemory("unused"),
+    memory: new TranslationMemory(IN_MEMORY),
     engine,
   });
 
@@ -41,6 +41,13 @@ describe("TranslatorService prompts", () => {
     const service = serviceWith(engine);
     assert.deepEqual(await service.toModel("запусти `npm test`"), { text: "run `npm test`", language: "ru" });
     assert.equal(calls[0]?.text, "запусти ⟦0⟧");
+  });
+
+  it("keeps quoted literals of prompts as the user wrote them", async () => {
+    const { engine, calls } = fromRussian((text) => text.replace("Напиши в файл", "Write to the file"));
+    const service = serviceWith(engine);
+    assert.equal((await service.toModel("Напиши в файл «Привет, мир»")).text, "Write to the file «Привет, мир»");
+    assert.equal(calls[0]?.text, "Напиши в файл ⟦0⟧");
   });
 
   it("asks the engine which language the user wrote in, and always translates into English", async () => {

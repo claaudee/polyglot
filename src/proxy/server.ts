@@ -11,7 +11,7 @@ import { TranslationMemory } from "../translation/memory.js";
 import { ContextEngine, type ContextEngineOptions } from "./context-engine.js";
 import { clientResponseHeaders, upstreamRequestHeaders } from "./headers.js";
 import { rewriteRequestBody, type MessagesBody } from "./rewrite-request.js";
-import { ReplyStreamRewriter, rewriteResponseBody, type ReplyStats } from "./stream-rewriter.js";
+import { ReplyRecorder, ReplyStreamRewriter, rewriteResponseBody, type ReplyStats } from "./stream-rewriter.js";
 import { TranslatorService, type ReplyTranslator } from "../translation/translator-service.js";
 
 export const DEFAULT_UPSTREAM = "https://api.anthropic.com";
@@ -156,6 +156,7 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
   const relayReply = async (
     upstreamResponse: Response,
     res: ServerResponse,
+    live: TranslatorService | undefined,
     replies: ReplyTranslator | undefined,
     language: string | undefined
   ): Promise<void> => {
@@ -175,6 +176,14 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
         recordMetric("reply", stats, true, startedAt, language)
       );
       for await (const chunk of rewriter.transform(body)) res.write(chunk);
+      res.end();
+      return;
+    }
+
+    // An English speaker's reply streams through untouched, but is still remembered as history.
+    if (live && contentType.includes("text/event-stream")) {
+      const recorder = new ReplyRecorder((text) => live.rememberUntranslated(text));
+      for await (const chunk of recorder.transform(body)) res.write(chunk);
       res.end();
       return;
     }
@@ -226,7 +235,7 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
       body: outgoing.raw.length > 0 ? outgoing.raw : undefined,
     });
 
-    await relayReply(upstreamResponse, res, replies, outgoing.language);
+    await relayReply(upstreamResponse, res, live, replies, outgoing.language);
   };
 
   const server = createServer((req, res) => {
