@@ -38,6 +38,8 @@ const newBlock = (): BlockState => ({
 
 export class ReplyStreamRewriter {
   private readonly blocks = new Map<number, BlockState>();
+  /** The model's text so far, across blocks: the context each block is translated in. */
+  private reply = "";
 
   constructor(
     private readonly service: ReplyTranslator,
@@ -47,7 +49,8 @@ export class ReplyStreamRewriter {
   private async emitTranslated(index: number, block: BlockState, text: string): Promise<string> {
     if (text === "") return "";
     block.original += text;
-    const translated = await this.service.replyChunk(text);
+    this.reply += text;
+    const translated = await this.service.replyChunk(text, this.reply);
     block.displayed += translated;
     return sseRecord("content_block_delta", {
       type: "content_block_delta",
@@ -102,6 +105,7 @@ export class ReplyStreamRewriter {
         block.buffer = "";
         block.original += text;
         block.displayed += text;
+        this.reply += text;
         return sseRecord("content_block_delta", {
           type: "content_block_delta",
           index,

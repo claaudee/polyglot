@@ -21,7 +21,6 @@ const scripted = (answer: (call: Call, index: number) => Translation | Promise<T
       calls.push(call);
       return answer(call, calls.length);
     },
-    dispose: async () => {},
   };
   return { engine, calls };
 };
@@ -33,7 +32,7 @@ const serviceWith = (engine: TranslationEngine, extra: { chunkTokens?: number; c
   new TranslatorService({
     scopes: DEFAULT_SCOPES,
     memory: new TranslationMemory("unused"),
-    engineFactory: () => engine,
+    engine,
     ...extra,
   });
 
@@ -155,6 +154,19 @@ describe("TranslatorService replies", () => {
     );
   });
 
+  it("asks each reply block after the request it answers and the model's reply so far", async () => {
+    const contexts: unknown[] = [];
+    const engine: TranslationEngine = {
+      name: "recording",
+      translate: async (text, _from, _to, context) => (contexts.push(context), { text: `«${text}»`, language: "en" }),
+    };
+    const request = [{ role: "user", content: "привет" }];
+    await serviceWith(engine).forReply("ru", request)!.replyChunk("Second.", "First.\n\nSecond.");
+    assert.deepEqual(contexts, [
+      [...request, { role: "assistant", content: [{ type: "text", text: "First.\n\nSecond." }] }],
+    ]);
+  });
+
   it("does not translate replies for English speakers", () => {
     const { engine } = scripted(() => ({ text: "never", language: "en" }));
     assert.equal(serviceWith(engine).forReply("en"), undefined);
@@ -163,7 +175,7 @@ describe("TranslatorService replies", () => {
   it("leaves code and text already in the user's script alone", async () => {
     const { engine, calls } = scripted(() => ({ text: "never", language: "en" }));
     const replies = serviceWith(engine).forReply("ru")!;
-    const russian = "Это прокси для Claude Code: он переводит промпты через Agent SDK по подписке.";
+    const russian = "Это прокси для Claude Code: он переводит промпты через подписку.";
     assert.equal(await replies.replyChunk(russian), russian);
     assert.equal(await replies.replyChunk("```sh\nls\n```\n"), "```sh\nls\n```\n");
     assert.equal(calls.length, 0);

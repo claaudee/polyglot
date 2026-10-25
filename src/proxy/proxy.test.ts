@@ -37,7 +37,7 @@ const makeService = async (): Promise<TranslatorService> => {
   return new TranslatorService({
     scopes: DEFAULT_SCOPES,
     memory,
-    engineFactory: fakeEngine,
+    engine: fakeEngine(),
   });
 };
 
@@ -108,6 +108,33 @@ describe("rewriteRequestBody", () => {
     assert.equal(user[1]?.text, "EN[продолжай]");
   });
 
+  it("translates each message inside the rewritten history before it", async () => {
+    const contexts: unknown[] = [];
+    const recording: RequestTextOps = {
+      toModel: async (text, context) => (contexts.push(context), { text: `EN[${text}]`, language: "ru" }),
+      restoreToModel: async (text, context) => (contexts.push(context), `ORIG[${text}]`),
+    };
+    const toolResult = { type: "tool_result", tool_use_id: "t1", content: "вывод" };
+    await rewriteRequestBody(
+      {
+        messages: [
+          { role: "user", content: "привет" },
+          { role: "assistant", content: [{ type: "text", text: "ответ" }, { type: "tool_use", id: "t1", name: "Bash", input: {} }] },
+          { role: "user", content: [toolResult, { type: "text", text: "продолжай" }] },
+        ],
+      },
+      recording
+    );
+
+    assert.deepEqual(contexts[0], []);
+    assert.deepEqual(contexts[1], [{ role: "user", content: "EN[привет]" }]);
+    assert.deepEqual(contexts[2], [
+      { role: "user", content: "EN[привет]" },
+      { role: "assistant", content: [{ type: "text", text: "ORIG[ответ]" }, { type: "tool_use", id: "t1", name: "Bash", input: {} }] },
+      { role: "user", content: [toolResult] },
+    ]);
+  });
+
   it("passes bodies without messages through", async () => {
     const body = { model: "claude-haiku-5-5", prompt: "legacy" };
     assert.deepEqual(await rewriteRequestBody(body, ops), { body });
@@ -121,26 +148,22 @@ describe("TranslatorService", () => {
     const second = await service.toModel("поправь баг");
     assert.deepEqual(first, { text: "EN[поправь баг]", language: "ru" });
     assert.deepEqual(first, second);
-    await service.dispose();
   });
 
   it("returns English as it is and says so", async () => {
     const service = await makeService();
     assert.deepEqual(await service.toModel("already english"), { text: "already english", language: "en" });
-    await service.dispose();
   });
 
   it("restores the exact original of a remembered reply", async () => {
     const service = await makeService();
     service.forReply("ru")!.rememberReply("original English text.", "«ру:какой-то перевод»");
     assert.equal(await service.restoreToModel("«ру:какой-то перевод»"), "original English text.");
-    await service.dispose();
   });
 
   it("falls back to MT for unremembered assistant history", async () => {
     const service = await makeService();
     assert.equal(await service.restoreToModel("незнакомый текст"), "EN[незнакомый текст]");
-    await service.dispose();
   });
 });
 
@@ -183,7 +206,6 @@ describe("ReplyStreamRewriter", () => {
     assert.ok(out.includes("ру:First line done.\\nSecond line."));
     assert.ok(out.includes("ру:Next paragraph."));
     assert.ok(!out.includes('"text":"First li"'));
-    await service.dispose();
   });
 
   it("keeps code fences untranslated across deltas", async () => {
@@ -200,14 +222,12 @@ describe("ReplyStreamRewriter", () => {
     assert.ok(out.includes("const x = 1;"));
     assert.ok(!out.includes("ру:const"));
     assert.ok(out.includes("ру:Outro line."));
-    await service.dispose();
   });
 
   it("flushes a partial final line on content_block_stop", async () => {
     const service = await makeService();
     const out = await collect(service, [start(0, "text"), delta(0, "no trailing newline"), stop(0)]);
     assert.ok(out.includes("ру:no trailing newline"));
-    await service.dispose();
   });
 
   it("passes tool_use blocks and unknown events through byte-for-byte", async () => {
@@ -221,7 +241,6 @@ describe("ReplyStreamRewriter", () => {
     const ping = "event: ping\ndata: {\"type\": \"ping\"}\n\n";
     const out = await collect(service, [toolStart, toolDelta, ping, stop(1)]);
     assert.equal(out, toolStart + toolDelta + ping + stop(1));
-    await service.dispose();
   });
 
   it("records the reply pair for later restore", async () => {
@@ -229,7 +248,6 @@ describe("ReplyStreamRewriter", () => {
     const out = await collect(service, [start(0, "text"), delta(0, "Reply text.\n"), stop(0)]);
     assert.ok(out.includes("ру:Reply text."));
     assert.equal(await service.restoreToModel("«ру:Reply text.»\n"), "Reply text.\n");
-    await service.dispose();
   });
 });
 
@@ -245,6 +263,5 @@ describe("rewriteResponseBody", () => {
     const result = (await rewriteResponseBody(body, service.forReply("ru")!)) as typeof body;
     assert.equal(result.content[0]?.text, "«ру:Plain answer.»");
     assert.deepEqual(result.content[1], body.content[1]);
-    await service.dispose();
   });
 });

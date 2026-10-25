@@ -5,9 +5,9 @@ import { debugLog, log } from "../log.js";
 import { MetricsStore } from "../metrics.js";
 import type { PolyglotPaths } from "../paths.js";
 import { mergeScopes } from "../text/scopes.js";
-import { createEngine } from "../translation/create-engine.js";
 import type { TranslationEngine } from "../translation/engine.js";
 import { TranslationMemory } from "../translation/memory.js";
+import { ContextEngine, type ContextEngineOptions } from "./context-engine.js";
 import { rewriteRequestBody, type MessagesBody } from "./rewrite-request.js";
 import { ReplyStreamRewriter, rewriteResponseBody, type ReplyStats } from "./stream-rewriter.js";
 import { TranslatorService, type ReplyTranslator } from "../translation/translator-service.js";
@@ -21,7 +21,8 @@ export interface ProxyOptions {
   /** Overrides upstream resolution (flag > env ANTHROPIC_BASE_URL > api.anthropic.com). */
   readonly upstream?: string;
   readonly env?: NodeJS.ProcessEnv;
-  readonly engineFactory?: () => TranslationEngine;
+  /** Tests substitute a fake; by default translations are asked inside the intercepted request. */
+  readonly engineFactory?: (request: ContextEngineOptions) => TranslationEngine;
 }
 
 export interface ProxyHandle {
@@ -114,48 +115,27 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
   const memory = new TranslationMemory(options.paths.statsFile);
   const metrics = new MetricsStore(options.paths.statsFile);
 
-  let service: TranslatorService | undefined;
-  let servicePair = "";
-
-  /** Re-reads the config per request so `pclaude disable` applies live; a broken config means relay as-is. */
-  const activeService = (): TranslatorService | undefined => {
+  /**
+   * A service for one intercepted request: its translations are asked
+   * inside that very request. The config is re-read every time, so
+   * `pclaude disable` and `pclaude config` apply live; a broken config
+   * means relay as-is.
+   */
+  const activeService = (request: ContextEngineOptions): TranslatorService | undefined => {
     try {
-      return configuredService();
+      const store = openConfig(env);
+      if (!isActive(store)) return undefined;
+      return new TranslatorService({
+        scopes: mergeScopes(store.get("scopes")),
+        memory,
+        chunkTokens: store.get("chunkTokens"),
+        concurrency: store.get("concurrency"),
+        engine: options.engineFactory?.(request) ?? new ContextEngine(request),
+      });
     } catch (error) {
       debugLog("proxy:config", error);
       return undefined;
     }
-  };
-
-  const configuredService = (): TranslatorService | undefined => {
-    const store = openConfig(env);
-    if (!isActive(store)) return undefined;
-
-    // Backend settings are part of the key, so `pclaude config` applies live.
-    const pair = [
-      store.get("model"),
-      store.get("effort"),
-      store.get("chunkTokens"),
-      store.get("concurrency"),
-      JSON.stringify(store.get("scopes")),
-    ].join("|");
-    if (service && servicePair !== pair) {
-      // The old service owns a translator process; let it go rather than leak it.
-      void service.dispose();
-      service = undefined;
-    }
-    servicePair = pair;
-
-    service ??= new TranslatorService({
-      scopes: mergeScopes(store.get("scopes")),
-      memory,
-      chunkTokens: store.get("chunkTokens"),
-      concurrency: store.get("concurrency"),
-      engineFactory:
-        options.engineFactory ??
-        (() => createEngine(store, env, { baseURL: upstream })),
-    });
-    return service;
   };
 
   /** `language` is the user's: prompts go from it to English, replies the other way. */
@@ -185,7 +165,7 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
   const rewriteOutgoing = async (
     raw: Buffer,
     live: TranslatorService
-  ): Promise<{ readonly raw: Buffer; readonly language?: string }> => {
+  ): Promise<{ readonly raw: Buffer; readonly body?: MessagesBody; readonly language?: string }> => {
     const startedAt = performance.now();
     try {
       const body = JSON.parse(raw.toString("utf8")) as MessagesBody;
@@ -194,7 +174,7 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
       const outputChars = lastUserTextLength(rewritten);
       const changed = JSON.stringify(rewritten) !== JSON.stringify(body);
       recordMetric("prompt", { inputChars, outputChars }, changed, startedAt, language);
-      return { raw: Buffer.from(JSON.stringify(rewritten), "utf8"), language };
+      return { raw: Buffer.from(JSON.stringify(rewritten), "utf8"), body: rewritten, language };
     } catch (error) {
       debugLog("proxy:request", error);
       return { raw };
@@ -258,15 +238,19 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
         { scope: "proxy:request", model: body.model, tools: Array.isArray(body["tools"]) ? body["tools"].length : 0, translatable },
         "messages request"
       );
-    const live = translatable ? activeService() : undefined;
+    const url = `${upstream}${req.url ?? "/"}`;
+    const headers = requestHeaders(req);
+    const live = translatable && body ? activeService({ url, headers, body }) : undefined;
 
     const outgoing = live && raw.length > 0 ? await rewriteOutgoing(raw, live) : { raw };
-    // The reply goes back in whatever language the user's latest words were in; none for English.
-    const replies = live && outgoing.language ? live.forReply(outgoing.language) : undefined;
+    // The reply goes back in whatever language the user's latest words were in, translated inside
+    // the request it answers; none for English.
+    const replies =
+      live && outgoing.language ? live.forReply(outgoing.language, outgoing.body?.messages ?? []) : undefined;
 
-    const upstreamResponse = await fetch(`${upstream}${req.url ?? "/"}`, {
+    const upstreamResponse = await fetch(url, {
       method: req.method,
-      headers: requestHeaders(req),
+      headers,
       body: outgoing.raw.length > 0 ? outgoing.raw : undefined,
     });
 
@@ -306,7 +290,6 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
     upstream,
     close: async () => {
       await new Promise<void>((resolve) => server.close(() => resolve()));
-      await service?.dispose();
       memory.close();
       metrics.close();
     },

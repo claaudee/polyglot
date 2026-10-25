@@ -13,22 +13,6 @@ export const retry = async <T>(
   }
 };
 
-/** Unbounded push queue read as an endless async iterable, e.g. a streaming-input feed. */
-export class AsyncQueue<T> implements AsyncIterable<T> {
-  private readonly items: T[] = [];
-  private readonly waiters: Array<(item: T) => void> = [];
-
-  push(item: T): void {
-    const waiter = this.waiters.shift();
-    if (waiter) waiter(item);
-    else this.items.push(item);
-  }
-
-  async *[Symbol.asyncIterator](): AsyncGenerator<T> {
-    for (;;) yield this.items.length > 0 ? this.items.shift()! : await new Promise<T>((resolve) => this.waiters.push(resolve));
-  }
-}
-
 /** `Promise.all(items.map(fn))` with at most `limit` calls in flight; results keep input order. */
 export const mapLimit = async <T, R>(
   items: readonly T[],

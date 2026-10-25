@@ -1,6 +1,6 @@
-import { cancel, confirm, group, intro, outro, select, text } from "@clack/prompts";
+import { cancel, confirm, group, intro, outro, text } from "@clack/prompts";
 import pc from "picocolors";
-import { EFFORTS, isActive, type ConfigStore } from "./config.js";
+import { isActive, type ConfigStore } from "./config.js";
 import { MODEL_LANGUAGE, resolveLanguage } from "./languages.js";
 
 const modelLanguage = resolveLanguage(MODEL_LANGUAGE)?.name ?? MODEL_LANGUAGE;
@@ -16,18 +16,6 @@ export const configWizard = async (store: ConfigStore): Promise<void> => {
   const answers = await group(
     {
       enabled: () => confirm({ message: "Translate prompts and replies?", initialValue: store.get("enabled") }),
-      model: () =>
-        text({
-          message: "Translator model",
-          initialValue: store.get("model"),
-          validate: (value) => (value?.trim() ? undefined : "required"),
-        }),
-      effort: () =>
-        select({
-          message: "Translator effort",
-          options: EFFORTS.map((effort) => ({ value: effort })),
-          initialValue: store.get("effort"),
-        }),
       chunkTokens: () =>
         text({ message: "Tokens per translation chunk", initialValue: String(store.get("chunkTokens")), validate: positiveInteger(100) }),
       concurrency: () =>
@@ -44,7 +32,6 @@ export const configWizard = async (store: ConfigStore): Promise<void> => {
   store.set({
     ...store.store,
     ...answers,
-    model: answers.model.trim(),
     chunkTokens: Number(answers.chunkTokens),
     concurrency: Number(answers.concurrency),
   });
@@ -55,6 +42,6 @@ export const configWizard = async (store: ConfigStore): Promise<void> => {
 export const printStatus = (store: ConfigStore): void =>
   console.log(
     isActive(store)
-      ? `${pc.green("●")} translation on: the language you write in ⇄ ${modelLanguage} via ${store.get("model")}`
+      ? `${pc.green("●")} translation on: the language you write in ⇄ ${modelLanguage}, asked of the session's own model`
       : `${pc.dim("○")} translation off: claude talks to the API directly through pclaude`
   );
