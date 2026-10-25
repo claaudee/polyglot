@@ -13,13 +13,21 @@ export interface SseRecord {
 
 const RECORD_BOUNDARY = /\r?\n\r?\n/;
 
+/**
+ * All `data:` lines of a record, joined as the SSE spec says; `[DONE]` and
+ * non-JSON payloads count as no data.
+ * Copied from claude-code-router's `parseSseEventBlock`:
+ * {@link https://github.com/musistudio/claude-code-router/blob/057abaa1f95519ab8faf999e1ccef2b80ccdeb9e/packages/core/src/gateway/features/hosted-web-search/sse.ts#L22-L40}
+ */
 const parseData = (raw: string): unknown => {
-  const line = raw
-    .split(/\r?\n/)
-    .find((candidate) => candidate.startsWith("data:"));
-  if (!line) return undefined;
+  const data = raw
+    .split(/\r?\n/g)
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice(5).replace(/^ /, ""))
+    .join("\n");
+  if (!data || data === "[DONE]") return undefined;
   try {
-    return JSON.parse(line.slice(5).trim());
+    return JSON.parse(data) as unknown;
   } catch {
     return undefined;
   }

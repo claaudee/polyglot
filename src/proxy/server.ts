@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { configuredGateway } from "../claude-env.js";
 import { isActive, openConfig } from "../config.js";
 import { MODEL_LANGUAGE } from "../languages.js";
 import { debugLog, log } from "../log.js";
@@ -8,6 +9,7 @@ import { mergeScopes } from "../text/scopes.js";
 import type { TranslationEngine } from "../translation/engine.js";
 import { TranslationMemory } from "../translation/memory.js";
 import { ContextEngine, type ContextEngineOptions } from "./context-engine.js";
+import { clientResponseHeaders, upstreamRequestHeaders } from "./headers.js";
 import { rewriteRequestBody, type MessagesBody } from "./rewrite-request.js";
 import { ReplyStreamRewriter, rewriteResponseBody, type ReplyStats } from "./stream-rewriter.js";
 import { TranslatorService, type ReplyTranslator } from "../translation/translator-service.js";
@@ -18,7 +20,7 @@ export interface ProxyOptions {
   readonly paths: PolyglotPaths;
   /** 0 = ephemeral. */
   readonly port?: number;
-  /** Overrides upstream resolution (flag > env ANTHROPIC_BASE_URL > api.anthropic.com). */
+  /** Overrides upstream resolution (flag > Claude Code's gateway variables > api.anthropic.com). */
   readonly upstream?: string;
   readonly env?: NodeJS.ProcessEnv;
   /** Tests substitute a fake; by default translations are asked inside the intercepted request. */
@@ -33,40 +35,12 @@ export interface ProxyHandle {
 }
 
 /**
- * Chaining: an already-set ANTHROPIC_BASE_URL (rtk-style setups, routers,
+ * Chaining: an already-set gateway variable such as ANTHROPIC_BASE_URL (rtk-style setups, routers,
  * corporate gateways) becomes our upstream, so polyglot slots in front of
  * whatever proxy stack is already there.
  */
 export const resolveUpstream = (explicit: string | undefined, env: NodeJS.ProcessEnv): string =>
-  (explicit ?? env["ANTHROPIC_BASE_URL"] ?? DEFAULT_UPSTREAM).replace(/\/+$/, "");
-
-const HOP_HEADERS = new Set([
-  "host",
-  "connection",
-  "keep-alive",
-  "proxy-connection",
-  "transfer-encoding",
-  "content-length",
-  "accept-encoding",
-  "upgrade",
-]);
-
-const requestHeaders = (req: IncomingMessage): Record<string, string> => {
-  const headers = Object.fromEntries(
-    Object.entries(req.headers)
-      .filter(([name]) => !HOP_HEADERS.has(name))
-      .map(([name, value]) => [name, Array.isArray(value) ? value.join(", ") : (value ?? "")])
-  );
-  return { ...headers, "accept-encoding": "identity" };
-};
-
-const responseHeaders = (response: Response): Record<string, string> => {
-  const headers: Record<string, string> = {};
-  response.headers.forEach((value, name) => {
-    if (!HOP_HEADERS.has(name) && name !== "content-encoding") headers[name] = value;
-  });
-  return headers;
-};
+  (explicit ?? configuredGateway(env) ?? DEFAULT_UPSTREAM).replace(/\/+$/, "");
 
 const readBody = async (req: IncomingMessage): Promise<Buffer> => {
   const chunks: Buffer[] = [];
@@ -185,7 +159,7 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
     replies: ReplyTranslator | undefined,
     language: string | undefined
   ): Promise<void> => {
-    res.writeHead(upstreamResponse.status, responseHeaders(upstreamResponse));
+    res.writeHead(upstreamResponse.status, clientResponseHeaders(upstreamResponse));
 
     const body = upstreamResponse.body;
     if (!body) {
@@ -237,7 +211,7 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
         "messages request"
       );
     const url = `${upstream}${req.url ?? "/"}`;
-    const headers = requestHeaders(req);
+    const headers = upstreamRequestHeaders(req.headers);
     const live = translatable && body ? activeService({ url, headers, body }) : undefined;
 
     const outgoing = live && raw.length > 0 ? await rewriteOutgoing(raw, live) : { raw };

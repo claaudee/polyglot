@@ -1,6 +1,7 @@
 import { constants } from "node:os";
 import { execa, ExecaError } from "execa";
 import pc from "picocolors";
+import { gatewayEnv } from "./claude-env.js";
 import { resolvePaths } from "./paths.js";
 import { startProxy } from "./proxy/server.js";
 
@@ -33,7 +34,7 @@ const exitCodeOf =(result: { readonly exitCode?: number; readonly signal?: keyof
 
 /**
  * `pclaude` = proxy + `claude` pointed at it. The proxy reads the caller's
- * `ANTHROPIC_BASE_URL` as its upstream before `claude` gets ours, so
+ * gateway variables as its upstream before `claude` gets ours, so
  * existing gateways stay in the chain. Resolves to `claude`'s exit code.
  */
 export const launch = async ({ args, env = process.env, command = "claude" }: LaunchOptions): Promise<number> => {
@@ -47,7 +48,7 @@ export const launch = async ({ args, env = process.env, command = "claude" }: La
       stdio: "inherit",
       reject: false,
       extendEnv: false,
-      env: { ...env, ANTHROPIC_BASE_URL: proxy.url },
+      env: gatewayEnv(env, proxy.url),
     });
     const forward = (signal: NodeJS.Signals): void => void subprocess.kill(signal);
     FORWARDED.forEach((signal) => process.on(signal, forward));
