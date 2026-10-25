@@ -28,12 +28,11 @@ const scripted = (answer: (call: Call, index: number) => Translation | Promise<T
 /** Answers every prompt as if it were Russian, translated by `map`. */
 const fromRussian = (map: (text: string) => string) => scripted(({ text }) => ({ text: map(text), language: "ru" }));
 
-const serviceWith = (engine: TranslationEngine, extra: { chunkTokens?: number; concurrency?: number } = {}) =>
+const serviceWith = (engine: TranslationEngine) =>
   new TranslatorService({
     scopes: DEFAULT_SCOPES,
     memory: new TranslationMemory("unused"),
     engine,
-    ...extra,
   });
 
 describe("TranslatorService prompts", () => {
@@ -85,7 +84,7 @@ describe("TranslatorService prompts", () => {
   it("falls back to the original when placeholders stay broken", async () => {
     const { engine, calls } = fromRussian(() => "⟦0⟧ ⟦0⟧");
     const service = serviceWith(engine);
-    assert.deepEqual(await service.toModel("запусти `ls`"), { text: "запусти `ls`", language: undefined });
+    assert.deepEqual(await service.toModel("запусти `ls`"), { text: "запусти `ls`" });
     assert.equal(calls.length, 2);
   });
 
@@ -101,7 +100,7 @@ describe("TranslatorService prompts", () => {
       throw new Error("529 overloaded");
     });
     const service = serviceWith(engine);
-    assert.deepEqual(await service.toModel("привет"), { text: "привет", language: undefined });
+    assert.deepEqual(await service.toModel("привет"), { text: "привет" });
     assert.equal(calls.length, 1);
   });
 
@@ -115,24 +114,8 @@ describe("TranslatorService prompts", () => {
   it("skips the engine for text with no words at all", async () => {
     const { engine, calls } = fromRussian(() => "never");
     const service = serviceWith(engine);
-    assert.deepEqual(await service.toModel("```sh\nls -la\n```"), { text: "```sh\nls -la\n```", language: undefined });
+    assert.deepEqual(await service.toModel("```sh\nls -la\n```"), { text: "```sh\nls -la\n```" });
     assert.equal(calls.length, 0);
-  });
-
-  it("translates prompt chunks in parallel up to the limit, in order", async () => {
-    let inFlight = 0;
-    let peak = 0;
-    const { engine } = scripted(async ({ text }) => {
-      peak = Math.max(peak, ++inFlight);
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      inFlight--;
-      return { text: text.replace("абзац", "paragraph"), language: "ru" };
-    });
-    const service = serviceWith(engine, { chunkTokens: 5, concurrency: 2 });
-    const text = Array.from({ length: 6 }, (_, index) => `абзац ${index + 1}.`).join("\n\n");
-    const expected = Array.from({ length: 6 }, (_, index) => `paragraph ${index + 1}.`).join("\n\n");
-    assert.deepEqual(await service.toModel(text), { text: expected, language: "ru" });
-    assert.equal(peak, 2);
   });
 });
 

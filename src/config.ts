@@ -10,8 +10,6 @@ import type { Scopes } from "./text/scopes.js";
  */
 export interface Settings {
   readonly enabled: boolean;
-  readonly chunkTokens: number;
-  readonly concurrency: number;
   readonly scopes: Partial<Scopes>;
 }
 
@@ -19,16 +17,12 @@ export type ConfigStore = Conf<Settings>;
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
-  chunkTokens: 2000,
-  concurrency: 4,
   scopes: {},
 };
 
 /** Validates hand edits of `config.json`: a bad value fails loudly instead of silently misbehaving. */
 const SCHEMA: Schema<Settings> = {
   enabled: { type: "boolean" },
-  chunkTokens: { type: "integer", minimum: 100 },
-  concurrency: { type: "integer", minimum: 1, maximum: 32 },
   scopes: {
     type: "object",
     properties: { user: { type: "boolean" }, assistant: { type: "boolean" } },

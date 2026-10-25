@@ -128,8 +128,6 @@ export const startProxy = async (options: ProxyOptions): Promise<ProxyHandle> =>
       return new TranslatorService({
         scopes: mergeScopes(store.get("scopes")),
         memory,
-        chunkTokens: store.get("chunkTokens"),
-        concurrency: store.get("concurrency"),
         engine: options.engineFactory?.(request) ?? new ContextEngine(request),
       });
     } catch (error) {

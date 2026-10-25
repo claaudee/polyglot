@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
 import { lexer, marked, walkTokens, type Token } from "marked";
 import { splitCompleted } from "./blocks.js";
-import { chunkBlocks } from "./chunk.js";
 import { mask, PlaceholderMismatch, restore, verify } from "./mask.js";
 
 interface Case {
@@ -88,9 +87,6 @@ for (const { name, cases } of suites)
         const after = protectedContent(translated);
         return JSON.stringify(before) === JSON.stringify(after) ? undefined : "protected content changed";
       }));
-
-    it("chunks join back to the source", () =>
-      holdsForAll(cases, (markdown) => (chunkBlocks(markdown, 20).join("") === markdown ? undefined : "join differs")));
 
     it("streamed splitCompleted reassembles the source", () =>
       holdsForAll(cases, (markdown) => (streamed(markdown, 7) === markdown ? undefined : "reassembly differs")));

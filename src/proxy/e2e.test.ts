@@ -167,7 +167,7 @@ describe("proxy end-to-end", () => {
   it("relays untranslated rather than failing when config.json is invalid", async () => {
     const file = openConfig(env).path;
     const saved = await readFile(file, "utf8");
-    await writeFile(file, JSON.stringify({ ...JSON.parse(saved), concurrency: "lots" }));
+    await writeFile(file, JSON.stringify({ ...JSON.parse(saved), enabled: "lots" }));
     try {
       const response = await post({ model: "claude-haiku-5-5", stream: true, messages: [{ role: "user", content: "привет" }] });
       assert.equal(response.status, 200);

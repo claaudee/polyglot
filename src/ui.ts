@@ -1,40 +1,19 @@
-import { cancel, confirm, group, intro, outro, text } from "@clack/prompts";
+import { cancel, confirm, intro, isCancel, outro } from "@clack/prompts";
 import pc from "picocolors";
 import { isActive, type ConfigStore } from "./config.js";
 import { MODEL_LANGUAGE, resolveLanguage } from "./languages.js";
 
 const modelLanguage = resolveLanguage(MODEL_LANGUAGE)?.name ?? MODEL_LANGUAGE;
 
-const positiveInteger =
-  (min: number) =>
-  (value: string | undefined): string | undefined =>
-    Number.isInteger(Number(value)) && Number(value) >= min ? undefined : `a whole number ≥ ${min}`;
-
 /** Interactive editor over the same `config.json` the proxy reads; Esc leaves it unchanged. */
 export const configWizard = async (store: ConfigStore): Promise<void> => {
   intro(pc.bold("pclaude settings"));
-  const answers = await group(
-    {
-      enabled: () => confirm({ message: "Translate prompts and replies?", initialValue: store.get("enabled") }),
-      chunkTokens: () =>
-        text({ message: "Tokens per translation chunk", initialValue: String(store.get("chunkTokens")), validate: positiveInteger(100) }),
-      concurrency: () =>
-        text({ message: "Chunks translated in parallel", initialValue: String(store.get("concurrency")), validate: positiveInteger(1) }),
-    },
-    {
-      onCancel: () => {
-        cancel("Nothing changed.");
-        process.exit(0);
-      },
-    }
-  );
-
-  store.set({
-    ...store.store,
-    ...answers,
-    chunkTokens: Number(answers.chunkTokens),
-    concurrency: Number(answers.concurrency),
-  });
+  const enabled = await confirm({ message: "Translate prompts and replies?", initialValue: store.get("enabled") });
+  if (isCancel(enabled)) {
+    cancel("Nothing changed.");
+    process.exit(0);
+  }
+  store.set("enabled", enabled);
   outro(`Saved to ${pc.cyan(store.path)}`);
 };
 
