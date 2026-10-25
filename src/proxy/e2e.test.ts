@@ -90,7 +90,7 @@ describe("proxy end-to-end", () => {
 
   it("translates the prompt and streams the reply back translated", async () => {
     const response = await post({
-      model: "claude-opus-5-5",
+      model: "claude-haiku-5-5",
       stream: true,
       system: "системный промпт",
       messages: [
@@ -123,7 +123,7 @@ describe("proxy end-to-end", () => {
   it("sends the model its own words back when the translated reply returns as history", async () => {
     const displayed = "«ру:The folder holds a small project.»\n\n«ру:Run it with:»\n\n```sh\nnpm start\n```\n\n«ру:Let me check the files.»";
     await post({
-      model: "claude-opus-5-5",
+      model: "claude-haiku-5-5",
       stream: true,
       messages: [
         { role: "user", content: "что в этой папке?" },
@@ -149,7 +149,7 @@ describe("proxy end-to-end", () => {
 
   it("leaves the reply alone for a user who writes in English", async () => {
     const stream = await post({
-      model: "claude-opus-5-5",
+      model: "claude-haiku-5-5",
       stream: true,
       messages: [{ role: "user", content: "what is in this folder?" }],
     }).then((response) => response.text());
@@ -169,7 +169,7 @@ describe("proxy end-to-end", () => {
     const saved = await readFile(file, "utf8");
     await writeFile(file, JSON.stringify({ ...JSON.parse(saved), concurrency: "lots" }));
     try {
-      const response = await post({ model: "claude-opus-5-5", stream: true, messages: [{ role: "user", content: "привет" }] });
+      const response = await post({ model: "claude-haiku-5-5", stream: true, messages: [{ role: "user", content: "привет" }] });
       assert.equal(response.status, 200);
       await response.text();
       assert.equal(JSON.parse(received.at(-1)?.body ?? "{}").messages[0].content, "привет");
@@ -181,7 +181,7 @@ describe("proxy end-to-end", () => {
   it("stops translating live when the config disables it", async () => {
     openConfig(env).set("enabled", false);
     try {
-      await post({ model: "claude-opus-5-5", stream: true, messages: [{ role: "user", content: "привет" }] }).then(
+      await post({ model: "claude-haiku-5-5", stream: true, messages: [{ role: "user", content: "привет" }] }).then(
         (response) => response.text()
       );
       assert.equal(JSON.parse(received.at(-1)?.body ?? "{}").messages[0].content, "привет");

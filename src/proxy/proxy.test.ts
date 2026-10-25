@@ -71,7 +71,7 @@ describe("rewriteRequestBody", () => {
 
   it("translates user text and restores assistant text", async () => {
     const body = {
-      model: "claude-x",
+      model: "claude-haiku-5-5",
       system: "системный промпт не трогать",
       messages: [
         { role: "user", content: "привет" },
@@ -109,7 +109,7 @@ describe("rewriteRequestBody", () => {
   });
 
   it("passes bodies without messages through", async () => {
-    const body = { model: "claude-x", prompt: "legacy" };
+    const body = { model: "claude-haiku-5-5", prompt: "legacy" };
     assert.deepEqual(await rewriteRequestBody(body, ops), { body });
   });
 });
