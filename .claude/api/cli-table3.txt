@@ -1,0 +1,116 @@
+# cli-table3 0.6.5
+Source: https://registry.npmjs.org/cli-table3/-/cli-table3-0.6.5.tgz
+Collected: 2026-10-24
+Scope: full public API
+Declarations: 4
+
+index.d.ts/
+  CliTable3/
+    /** (undocumented) */
+    /** (undocumented) */
+    type CharName = "top" | "top-mid" | "top-left" | "top-right" | "bottom" | "bottom-mid" | "bottom-left" | "bottom-right" | "left" | "left-mid" | "mid" | "mid-mid" | "right" | "right-mid" | "middle"
+    /** (undocumented) */
+    type HorizontalAlignment = "left" | "center" | "right"
+    /** (undocumented) */
+    type VerticalAlignment = "top" | "center" | "bottom"
+    TableOptions
+      /** (undocumented) */
+      interface TableOptions
+      /** (undocumented) */
+      truncate: string
+      /** (undocumented) */
+      colWidths: Array<number | null>
+      /** (undocumented) */
+      rowHeights: Array<number | null>
+      /** (undocumented) */
+      colAligns: HorizontalAlignment[]
+      /** (undocumented) */
+      rowAligns: VerticalAlignment[]
+      /** (undocumented) */
+      head: string[]
+      /** (undocumented) */
+      wordWrap: boolean
+      /** (undocumented) */
+      wrapOnWordBoundary: boolean
+
+    TableInstanceOptions
+      /** (undocumented) */
+      interface TableInstanceOptions extends TableOptions
+      /** (undocumented) */
+      chars: Record<CharName, string>
+      /** (undocumented) */
+      style: { "padding-left": number; "padding-right": number; head: string[]; border: string[]; compact: boolean; }
+
+    TableConstructorOptions
+      /** (undocumented) */
+      interface TableConstructorOptions extends Partial<TableOptions>
+      /** (undocumented) */
+      chars?: Partial<Record<CharName, string>>
+      /** (undocumented) */
+      style?: Partial<TableInstanceOptions["style"]>
+
+    /** (undocumented) */
+    type CellValue = boolean | number | bigint | string | null | undefined
+    CellOptions
+      /** (undocumented) */
+      interface CellOptions
+      /** (undocumented) */
+      content: CellValue
+      /** (undocumented) */
+      chars?: Partial<Record<CharName, string>>
+      /** (undocumented) */
+      truncate?: string
+      /** (undocumented) */
+      colSpan?: number
+      /** (undocumented) */
+      rowSpan?: number
+      /** (undocumented) */
+      hAlign?: HorizontalAlignment
+      /** (undocumented) */
+      vAlign?: VerticalAlignment
+      /** (undocumented) */
+      wordWrap?: boolean
+      /** (undocumented) */
+      wrapOnWordBoundary?: boolean
+      /** (undocumented) */
+      href?: string
+      /** (undocumented) */
+      style?: { "padding-left"?: number; "padding-right"?: number; head?: string[]; border?: string[]; }
+
+    GenericTable
+      /** (undocumented) */
+      interface GenericTable<T> extends Array<T>
+      /** (undocumented) */
+      options: TableInstanceOptions
+      /** (undocumented) */
+      readonly width: number
+
+    /** (undocumented) */
+    type Table = GenericTable<HorizontalTableRow|VerticalTableRow|CrossTableRow>
+    /** (undocumented) */
+    type Cell = CellValue | CellOptions
+    /** (undocumented) */
+    type HorizontalTableRow = Cell[]
+    VerticalTableRow
+      /** (undocumented) */
+      interface VerticalTableRow
+      /** (undocumented) */
+      [name: string]: Cell
+
+    CrossTableRow
+      /** (undocumented) */
+      interface CrossTableRow
+      /** (undocumented) */
+      [name: string]: Cell[]
+
+  CliTable3
+    /** (undocumented) */
+    interface CliTable3
+    /** (undocumented) */
+    new (options?: CliTable3.TableConstructorOptions): CliTable3.Table
+    /** (undocumented) */
+    readonly prototype: CliTable3.Table
+
+  /** (undocumented) */
+  declare const CliTable3: CliTable3
+  export = CliTable3

@@ -1,0 +1,2337 @@
+# anthropic-sdk 1.3.0
+Source: https://registry.npmjs.org/@anthropic-ai/sdk/-/sdk-1.3.0.tgz
+Collected: 2026-10-24
+Scope: client options, errors, SSE Stream, APIPromise, MessageStream, Messages resource and core message/stream/usage types. Excluded: beta, batches, files, models, server tools (browser/computer/code-execution/web-fetch/web-search/tool-search/text-editor/memory), citations, containers, skills.
+Declarations: 128
+
+client.d.ts/
+  export type { Logger, LogLevel } from "./internal/utils/log.js"
+  export type { OpenTelemetryOptions, OpenTelemetryRequestOptions, OpenTelemetryTracesOptions, ResolvedOpenTelemetryOptions, } from "./internal/tracing.js"
+  export type { Middleware, MiddlewareContext, MiddlewareNext } from "./core/middleware.js"
+  export type { APIRequest } from "./core/api.js"
+  /** (undocumented) */
+  export type ApiKeySetter = () => Promise<string>
+  ClientOptions
+    /** (undocumented) */
+    export interface ClientOptions
+    /**
+     * API key used for authentication.
+     *
+     * - Accepts either a static string or an async function that resolves to a string.
+     * - Sent as `Authorization: Bearer <key>`.
+     * - Mutually exclusive with `authToken`, `credentials`, `config`, and `profile`.
+     * - Defaults to process.env['ANTHROPIC_API_KEY'], which is not read when one of those options is passed.
+     * - When a function is provided, it is invoked before each request so you can rotate
+     *   or refresh credentials at runtime.
+     * - The function must return a non-empty string; otherwise an AnthropicError is thrown.
+     * - If the function throws, the error is wrapped in an AnthropicError with the original
+     *   error available as `cause`.
+     */
+    apiKey?: string | ApiKeySetter | null | undefined
+    /**
+     * Defaults to process.env['ANTHROPIC_AUTH_TOKEN'].
+     *
+     * The environment variable is not used when `apiKey`, `credentials`,
+     * `config`, or `profile` is passed, or when `ANTHROPIC_API_KEY` is set, which
+     * logs a warning once per process. Mutually exclusive with those options.
+     */
+    authToken?: string | null | undefined
+    /**
+     * An {@link AccessTokenProvider} for OAuth/workload-identity authentication.
+     *
+     * When set, the provider is wrapped in a {@link TokenCache} and used for
+     * Bearer token auth on every request. Mutually exclusive with `apiKey`,
+     * `authToken`, `config`, and `profile`.
+     *
+     * If none of these options is passed (and neither `ANTHROPIC_API_KEY` nor
+     * `ANTHROPIC_AUTH_TOKEN` is set), the client resolves credentials on the
+     * first request, from the first of these: the profile `ANTHROPIC_PROFILE`
+     * names, which is an error if it does not exist; the workload identity
+     * federation variables; the active profile on disk, which is the one the
+     * `active_config` file names, otherwise `default`.
+     */
+    credentials?: AccessTokenProvider | null | undefined
+    /**
+     * An {@link AnthropicConfig} object to resolve credentials from directly,
+     * bypassing config-file and environment-variable lookup.
+     *
+     * Mutually exclusive with `apiKey`, `authToken`, `credentials`, and
+     * `profile`. For `oidc_federation`, the SDK performs the jwt-bearer exchange
+     * in-process; for `user_oauth`, `authentication.credentials_path` must point
+     * at the credentials file.
+     */
+    config?: AnthropicConfig | null | undefined
+    /**
+     * Name of a profile to load from `<config_dir>/configs/<profile>.json`.
+     *
+     * Selects a profile as the `ANTHROPIC_PROFILE` environment variable does, but
+     * for this client instance only. As an explicit constructor argument it takes
+     * precedence over every credential in the environment, so a profile that
+     * does not exist is an error. Mutually exclusive with `apiKey`, `authToken`,
+     * `credentials`, and `config`.
+     */
+    profile?: string | null | undefined
+    /** Defaults to process.env['ANTHROPIC_WEBHOOK_SIGNING_KEY']. */
+    webhookKey?: string | null | undefined
+    /**
+     * Override the default base URL for the API, e.g., "https://api.example.com/v2/"
+     *
+     * Defaults to process.env['ANTHROPIC_BASE_URL'].
+     */
+    baseURL?: string | null | undefined
+    /**
+     * The maximum amount of time (in milliseconds) that the client should wait for a response
+     * from the server before timing out a single request.
+     *
+     * Note that request timeouts are retried by default, so in a worst-case scenario you may wait
+     * much longer than this timeout before the promise succeeds or fails.
+     *
+     * @unit milliseconds
+     */
+    timeout?: number | undefined
+    /**
+     * Additional `RequestInit` options to be passed to `fetch` calls.
+     * Properties will be overridden by per-request `fetchOptions`.
+     */
+    fetchOptions?: MergedRequestInit | undefined
+    /**
+     * Specify a custom `fetch` function implementation.
+     *
+     * If not provided, we expect that `fetch` is defined globally.
+     */
+    fetch?: Fetch | undefined
+    /**
+     * {@link Middleware} functions that wrap every HTTP request made by the
+     * client.
+     *
+     * Middleware runs per HTTP attempt, including retries. It observes the
+     * canonical Anthropic-shaped request and response on every backend: on
+     * clients for third-party backends (Bedrock, Vertex, Foundry), the
+     * backend's URL/body rewriting, request signing, and response
+     * normalization happen inside `next`.
+     */
+    middleware?: ReadonlyArray<Middleware> | undefined
+    /**
+     * The maximum number of times that the client will retry a request in case of a
+     * temporary failure, like a network error or a 5XX error from the server.
+     *
+     * @default 2
+     */
+    maxRetries?: number | undefined
+    /**
+     * Default headers to include with every request to the API.
+     *
+     * These can be removed in individual requests by explicitly setting the
+     * header to `null` in request options.
+     */
+    defaultHeaders?: HeadersLike | undefined
+    /**
+     * Default query parameters to include with every request to the API.
+     *
+     * These can be removed in individual requests by explicitly setting the
+     * param to `undefined` in request options.
+     */
+    defaultQuery?: Record<string, string | undefined> | undefined
+    /**
+     * By default, client-side use of this library is not allowed, as it risks exposing your secret API credentials to attackers.
+     * Only set this option to `true` if you understand the risks and have appropriate mitigations in place.
+     */
+    dangerouslyAllowBrowser?: boolean | undefined
+    /**
+     * OpenTelemetry tracing of this client's API calls. Each API call emits a span when
+     * the application has registered a tracer provider with the OpenTelemetry API.
+     *
+     * `false`, short for `{ traces: false }`, disables the spans.
+     * `propagation: false` keeps the spans and sends no trace context with the requests.
+     *
+     * A client without this option reads its environment variables once, when it is constructed:
+     * `ANTHROPIC_OPEN_TELEMETRY` set to `false` disables the spans,
+     * `ANTHROPIC_OPEN_TELEMETRY_PROPAGATION` set to `false` turns `propagation` off, and
+     * `ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE` and
+     * `ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES` give `traces.contentMode` and
+     * `traces.maxContentBytes`. A client with this option does not read them: a field that the
+     * option leaves unset has its default.
+     *
+     * A `withOptions()` copy without its own `openTelemetry` option keeps this client's settled one.
+     * A copy with its own option uses that in place of this client's whole option, so it keeps none
+     * of this client's fields. Spread {@link BaseAnthropic.openTelemetry} into the copy's option to
+     * keep them.
+     */
+    openTelemetry?: OpenTelemetryOptions | false | undefined
+    /**
+     * Set the log level.
+     *
+     * Defaults to process.env['ANTHROPIC_LOG'] or 'warn' if it isn't set.
+     */
+    logLevel?: LogLevel | undefined
+    /**
+     * Set the logger.
+     *
+     * Defaults to globalThis.console.
+     */
+    logger?: Logger | undefined
+
+  BaseAnthropic
+    /** Base class for Anthropic API clients. */
+    export declare class BaseAnthropic
+    /** (undocumented) */
+    apiKey: string | null
+    /** (undocumented) */
+    authToken: string | null
+    /** (undocumented) */
+    webhookKey: string | null
+    /**
+     * The active credential provider. Default credential resolution runs once
+     * at construction time. If it fails, the error is surfaced on every
+     * request and the client must be reconstructed — there is no retry path.
+     *
+     * Clones returned by {@link withOptions} share the parent's auth state
+     * (provider, token cache, pending resolution, and any resolution error)
+     * unless the caller passes an explicit `apiKey`, `authToken`,
+     * `credentials`, `config`, or `profile` override.
+     */
+    get credentials(): AccessTokenProvider | null
+    /** (undocumented) */
+    baseURL: string
+    /** (undocumented) */
+    maxRetries: number
+    /** (undocumented) */
+    timeout: number
+    /** (undocumented) */
+    logger: Logger
+    /** (undocumented) */
+    logLevel: LogLevel | undefined
+    /** (undocumented) */
+    fetchOptions: MergedRequestInit | undefined
+    /** (undocumented) */
+    middleware: ReadonlyArray<Middleware>
+    /**
+     * The `openTelemetry` option as this client settled it when it was constructed: `propagation` and
+     * each field of `traces` from the option, or else its default. A client constructed without the
+     * option has what the environment variables said. One constructed with `openTelemetry: false` has
+     * `traces.enabled: false` here.
+     *
+     * The value is frozen. It is a valid `openTelemetry` option, so a copy of this client can change
+     * one setting and keep the others:
+     *
+     * const { openTelemetry } = client;
+     * client.withOptions({
+     *   openTelemetry: { ...openTelemetry, traces: { ...openTelemetry.traces, contentMode: 'content' } },
+     * });
+     */
+    get openTelemetry(): ResolvedOpenTelemetryOptions
+    /**
+     * API Client for interfacing with the Anthropic API.
+     *
+     * @param {string | null | undefined} [opts.apiKey=process.env['ANTHROPIC_API_KEY'] ?? null]
+     * @param {string | null | undefined} [opts.authToken=process.env['ANTHROPIC_AUTH_TOKEN'] ?? null]
+     * @param {string | null | undefined} [opts.webhookKey=process.env['ANTHROPIC_WEBHOOK_SIGNING_KEY'] ?? null]
+     * @param {string} [opts.baseURL=process.env['ANTHROPIC_BASE_URL'] ?? https://api.anthropic.com] - Override the default base URL for the API.
+     * @param {number} [opts.timeout=10 minutes] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
+     * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
+     * @param {boolean} [opts.dangerouslyAllowBrowser=false] - By default, client-side use of this library is not allowed, as it risks exposing your secret API credentials to attackers.
+     */
+    constructor({ baseURL, apiKey, authToken, webhookKey, ...opts }?: ClientOptions)
+    /**
+     * Create a new client instance re-using the same options given to the
+     * current client with optional overriding.
+     *
+     * Passing `apiKey`, `authToken`, `credentials`, `config`, or `profile`
+     * replaces the current client's credential, whatever its kind. With none of
+     * them passed, the new client keeps it. Either way it keeps
+     * `defaultHeaders`, including an `X-Api-Key` or `Authorization` set there.
+     */
+    withOptions(options: Partial<ClientOptions>): this
+    /** (undocumented) */
+    buildURL(path: string, query: Record<string, unknown> | null | undefined, defaultBaseURL?: string | undefined): string
+    /** (undocumented) */
+    get<Rsp>(path: string, opts?: PromiseOrValue<RequestOptions>): APIPromise<Rsp>
+    /** (undocumented) */
+    post<Rsp>(path: string, opts?: PromiseOrValue<RequestOptions>): APIPromise<Rsp>
+    /** (undocumented) */
+    patch<Rsp>(path: string, opts?: PromiseOrValue<RequestOptions>): APIPromise<Rsp>
+    /** (undocumented) */
+    put<Rsp>(path: string, opts?: PromiseOrValue<RequestOptions>): APIPromise<Rsp>
+    /** (undocumented) */
+    delete<Rsp>(path: string, opts?: PromiseOrValue<RequestOptions>): APIPromise<Rsp>
+    /** (undocumented) */
+    request<Rsp>(options: PromiseOrValue<FinalRequestOptions>, remainingRetries?: number | null): APIPromise<Rsp>
+    /** (undocumented) */
+    getAPIList<Item, PageClass extends Pagination.AbstractPage<Item> = Pagination.AbstractPage<Item>>(path: string, Page: new (...args: any[]) => PageClass, opts?: PromiseOrValue<RequestOptions>): Pagination.PagePromise<PageClass, Item>
+    /** (undocumented) */
+    requestAPIList<Item = unknown, PageClass extends Pagination.AbstractPage<Item> = Pagination.AbstractPage<Item>>(Page: new (...args: ConstructorParameters<typeof Pagination.AbstractPage>) => PageClass, options: PromiseOrValue<FinalRequestOptions>): Pagination.PagePromise<PageClass, Item>
+    /** (undocumented) */
+    fetchWithTimeout(url: RequestInfo, init: RequestInit | undefined, ms: number, controller: AbortController, requestOptions?: FinalRequestOptions | undefined, logCtx?: { requestLogID: string; retryOfRequestLogID?: string | undefined; } | undefined): Promise<Response>
+    /** (undocumented) */
+    calculateNonstreamingTimeout(maxTokens: number, maxNonstreamingTokens?: number): number
+    /** (undocumented) */
+    buildRequest(inputOptions: FinalRequestOptions, { retryCount }?: { retryCount?: number; }): Promise<{ req: FinalizedRequestInit; url: string; timeout: number; }>
+    /** (undocumented) */
+    static Anthropic: typeof BaseAnthropic
+    /** (undocumented) */
+    static DEFAULT_TIMEOUT: number
+    /** (undocumented) */
+    static AnthropicError: typeof Errors.AnthropicError
+    /** (undocumented) */
+    static APIError: typeof Errors.APIError
+    /** (undocumented) */
+    static APIConnectionError: typeof Errors.APIConnectionError
+    /** (undocumented) */
+    static APIConnectionTimeoutError: typeof Errors.APIConnectionTimeoutError
+    /** (undocumented) */
+    static APIUserAbortError: typeof Errors.APIUserAbortError
+    /** (undocumented) */
+    static NotFoundError: typeof Errors.NotFoundError
+    /** (undocumented) */
+    static ConflictError: typeof Errors.ConflictError
+    /** (undocumented) */
+    static RateLimitError: typeof Errors.RateLimitError
+    /** (undocumented) */
+    static BadRequestError: typeof Errors.BadRequestError
+    /** (undocumented) */
+    static AuthenticationError: typeof Errors.AuthenticationError
+    /** (undocumented) */
+    static InternalServerError: typeof Errors.InternalServerError
+    /** (undocumented) */
+    static PermissionDeniedError: typeof Errors.PermissionDeniedError
+    /** (undocumented) */
+    static UnprocessableEntityError: typeof Errors.UnprocessableEntityError
+    /** (undocumented) */
+    static toFile: typeof Uploads.toFile
+
+  Anthropic
+    /** API Client for interfacing with the Anthropic API. */
+    export declare class Anthropic extends BaseAnthropic
+    /** (undocumented) */
+    messages: API.Messages
+    /** (undocumented) */
+    models: API.Models
+    /** (undocumented) */
+    files: API.Files
+    /** (undocumented) */
+    skills: API.Skills
+    /** (undocumented) */
+    userProfiles: API.UserProfiles
+    /** (undocumented) */
+    organization: API.Organization
+    /** (undocumented) */
+    beta: API.Beta
+
+  Anthropic/
+    /** (undocumented) */
+    /** (undocumented) */
+    export type RequestOptions = Opts.RequestOptions
+    /** (undocumented) */
+    export type FinalRequestOptions = Opts.FinalRequestOptions
+    export type { ApiKeySetter }
+    export { type Page as Page, type PageParams as PageParams, type PageResponse as PageResponse }
+    export { type TokenPage as TokenPage, type TokenPageParams as TokenPageParams, type TokenPageResponse as TokenPageResponse, }
+    export { type PageCursor as PageCursor, type PageCursorParams as PageCursorParams, type PageCursorResponse as PageCursorResponse, }
+    export { type BidirectionalPageCursor as BidirectionalPageCursor, type BidirectionalPageCursorParams as BidirectionalPageCursorParams, type BidirectionalPageCursorResponse as BidirectionalPageCursorResponse, }
+    export { type ReportPageCursor as ReportPageCursor, type ReportPageCursorParams as ReportPageCursorParams, type ReportPageCursorResponse as ReportPageCursorResponse, }
+    export { Messages as Messages, type AssistantMessageParam as AssistantMessageParam, type Base64ImageSource as Base64ImageSource, type Base64PDFSource as Base64PDFSource, type BashCodeExecutionOutputBlock as BashCodeExecutionOutputBlock, type BashCodeExecutionOutputBlockParam as BashCodeExecutionOutputBlockParam, type BashCodeExecutionResultBlock as BashCodeExecutionResultBlock, type BashCodeExecutionResultBlockParam as BashCodeExecutionResultBlockParam, type BashCodeExecutionToolResultBlock as BashCodeExecutionToolResultBlock, type BashCodeExecutionToolResultBlockParam as BashCodeExecutionToolResultBlockParam, type BashCodeExecutionToolResultError as BashCodeExecutionToolResultError, type BashCodeExecutionToolResultErrorCode as BashCodeExecutionToolResultErrorCode, type BashCodeExecutionToolResultErrorParam as BashCodeExecutionToolResultErrorParam, type BrowserClickTarget as BrowserClickTarget, type BrowserCloseTabConfig as BrowserCloseTabConfig, type BrowserCloseTabInput as BrowserCloseTabInput, type BrowserCloseTabToolUseBlock as BrowserCloseTabToolUseBlock, type BrowserCoordinateTarget as BrowserCoordinateTarget, type BrowserDoubleClickConfig as BrowserDoubleClickConfig, type BrowserDoubleClickInput as BrowserDoubleClickInput, type BrowserDoubleClickToolUseBlock as BrowserDoubleClickToolUseBlock, type BrowserFileUploadConfig as BrowserFileUploadConfig, type BrowserFileUploadInput as BrowserFileUploadInput, type BrowserFileUploadToolUseBlock as BrowserFileUploadToolUseBlock, type BrowserFindConfig as BrowserFindConfig, type BrowserFindInput as BrowserFindInput, type BrowserFindToolUseBlock as BrowserFindToolUseBlock, type BrowserFormInputConfig as BrowserFormInputConfig, type BrowserFormInputInput as BrowserFormInputInput, type BrowserFormInputToolUseBlock as BrowserFormInputToolUseBlock, type BrowserFormInputValue as BrowserFormInputValue, type BrowserGetPageTextConfig as BrowserGetPageTextConfig, type BrowserGetPageTextInput as BrowserGetPageTextInput, type BrowserGetPageTextToolUseBlock as BrowserGetPageTextToolUseBlock, type BrowserHoldKeyConfig as BrowserHoldKeyConfig, type BrowserHoldKeyInput as BrowserHoldKeyInput, type BrowserHoldKeyToolUseBlock as BrowserHoldKeyToolUseBlock, type BrowserHoverConfig as BrowserHoverConfig, type BrowserHoverInput as BrowserHoverInput, type BrowserHoverToolUseBlock as BrowserHoverToolUseBlock, type BrowserJavascriptExecConfig as BrowserJavascriptExecConfig, type BrowserJavascriptExecInput as BrowserJavascriptExecInput, type BrowserJavascriptExecToolUseBlock as BrowserJavascriptExecToolUseBlock, type BrowserKeyConfig as BrowserKeyConfig, type BrowserKeyInput as BrowserKeyInput, type BrowserKeyToolUseBlock as BrowserKeyToolUseBlock, type BrowserLeftClickConfig as BrowserLeftClickConfig, type BrowserLeftClickDragConfig as BrowserLeftClickDragConfig, type BrowserLeftClickDragInput as BrowserLeftClickDragInput, type BrowserLeftClickDragToolUseBlock as BrowserLeftClickDragToolUseBlock, type BrowserLeftClickInput as BrowserLeftClickInput, type BrowserLeftClickToolUseBlock as BrowserLeftClickToolUseBlock, type BrowserLeftMouseDownConfig as BrowserLeftMouseDownConfig, type BrowserLeftMouseDownInput as BrowserLeftMouseDownInput, type BrowserLeftMouseDownToolUseBlock as BrowserLeftMouseDownToolUseBlock, type BrowserLeftMouseUpConfig as BrowserLeftMouseUpConfig, type BrowserLeftMouseUpInput as BrowserLeftMouseUpInput, type BrowserLeftMouseUpToolUseBlock as BrowserLeftMouseUpToolUseBlock, type BrowserListTabsConfig as BrowserListTabsConfig, type BrowserListTabsInput as BrowserListTabsInput, type BrowserListTabsToolUseBlock as BrowserListTabsToolUseBlock, type BrowserMemberInput as BrowserMemberInput, type BrowserMemberName as BrowserMemberName, type BrowserMiddleClickConfig as BrowserMiddleClickConfig, type BrowserMiddleClickInput as BrowserMiddleClickInput, type BrowserMiddleClickToolUseBlock as BrowserMiddleClickToolUseBlock, type BrowserMouseMoveConfig as BrowserMouseMoveConfig, type BrowserMouseMoveInput as BrowserMouseMoveInput, type BrowserMouseMoveToolUseBlock as BrowserMouseMoveToolUseBlock, type BrowserNavigateConfig as BrowserNavigateConfig, type BrowserNavigateInput as BrowserNavigateInput, type BrowserNavigateToolUseBlock as BrowserNavigateToolUseBlock, type BrowserNewTabConfig as BrowserNewTabConfig, type BrowserNewTabInput as BrowserNewTabInput, type BrowserNewTabToolUseBlock as BrowserNewTabToolUseBlock, type BrowserReadConsoleConfig as BrowserReadConsoleConfig, type BrowserReadConsoleInput as BrowserReadConsoleInput, type BrowserReadConsoleToolUseBlock as BrowserReadConsoleToolUseBlock, type BrowserReadNetworkConfig as BrowserReadNetworkConfig, type BrowserReadNetworkInput as BrowserReadNetworkInput, type BrowserReadNetworkToolUseBlock as BrowserReadNetworkToolUseBlock, type BrowserReadPageConfig as BrowserReadPageConfig, type BrowserReadPageFilter as BrowserReadPageFilter, type BrowserReadPageInput as BrowserReadPageInput, type BrowserReadPageToolUseBlock as BrowserReadPageToolUseBlock, type BrowserRefTarget as BrowserRefTarget, type BrowserRightClickConfig as BrowserRightClickConfig, type BrowserRightClickInput as BrowserRightClickInput, type BrowserRightClickToolUseBlock as BrowserRightClickToolUseBlock, type BrowserScreenshotConfig as BrowserScreenshotConfig, type BrowserScreenshotInput as BrowserScreenshotInput, type BrowserScreenshotToolUseBlock as BrowserScreenshotToolUseBlock, type BrowserScrollConfig as BrowserScrollConfig, type BrowserScrollDirection as BrowserScrollDirection, type BrowserScrollInput as BrowserScrollInput, type BrowserScrollToConfig as BrowserScrollToConfig, type BrowserScrollToInput as BrowserScrollToInput, type BrowserScrollToToolUseBlock as BrowserScrollToToolUseBlock, type BrowserScrollToolUseBlock as BrowserScrollToolUseBlock, type BrowserStateBlockParam as BrowserStateBlockParam, type BrowserStateChange as BrowserStateChange, type BrowserStateChangeDownloadCompleted as BrowserStateChangeDownloadCompleted, type BrowserStateChangeDownloadFailed as BrowserStateChangeDownloadFailed, type BrowserStateChangeDownloadStarted as BrowserStateChangeDownloadStarted, type BrowserStateChangeTabOpened as BrowserStateChangeTabOpened, type BrowserStateTabEntry as BrowserStateTabEntry, type BrowserSwitchTabConfig as BrowserSwitchTabConfig, type BrowserSwitchTabInput as BrowserSwitchTabInput, type BrowserSwitchTabToolUseBlock as BrowserSwitchTabToolUseBlock, type BrowserToolUseBlock as BrowserToolUseBlock, type BrowserToolset20260801 as BrowserToolset20260801, type BrowserToolsetConfigs as BrowserToolsetConfigs, type BrowserTripleClickConfig as BrowserTripleClickConfig, type BrowserTripleClickInput as BrowserTripleClickInput, type BrowserTripleClickToolUseBlock as BrowserTripleClickToolUseBlock, type BrowserTypeConfig as BrowserTypeConfig, type BrowserTypeInput as BrowserTypeInput, type BrowserTypeToolUseBlock as BrowserTypeToolUseBlock, type BrowserWaitConfig as BrowserWaitConfig, type BrowserWaitInput as BrowserWaitInput, type BrowserWaitToolUseBlock as BrowserWaitToolUseBlock, type BrowserZoomConfig as BrowserZoomConfig, type BrowserZoomInput as BrowserZoomInput, type BrowserZoomToolUseBlock as BrowserZoomToolUseBlock, type CacheControlEphemeral as CacheControlEphemeral, type CacheCreation as CacheCreation, type CacheMissMessagesChanged as CacheMissMessagesChanged, type CacheMissModelChanged as CacheMissModelChanged, type CacheMissPreviousMessageNotFound as CacheMissPreviousMessageNotFound, type CacheMissReason as CacheMissReason, type CacheMissSystemChanged as CacheMissSystemChanged, type CacheMissToolsChanged as CacheMissToolsChanged, type CacheMissUnavailable as CacheMissUnavailable, type CitationCharLocation as CitationCharLocation, type CitationCharLocationParam as CitationCharLocationParam, type CitationContentBlockLocation as CitationContentBlockLocation, type CitationContentBlockLocationParam as CitationContentBlockLocationParam, type CitationPageLocation as CitationPageLocation, type CitationPageLocationParam as CitationPageLocationParam, type CitationSearchResultLocationParam as CitationSearchResultLocationParam, type CitationWebSearchResultLocationParam as CitationWebSearchResultLocationParam, type CitationsConfig as CitationsConfig, type CitationsConfigParam as CitationsConfigParam, type CitationsDelta as CitationsDelta, type CitationsSearchResultLocation as CitationsSearchResultLocation, type CitationsWebSearchResultLocation as CitationsWebSearchResultLocation, type ClientToolUnion as ClientToolUnion, type CodeExecutionOutputBlock as CodeExecutionOutputBlock, type CodeExecutionOutputBlockParam as CodeExecutionOutputBlockParam, type CodeExecutionResultBlock as CodeExecutionResultBlock, type CodeExecutionResultBlockParam as CodeExecutionResultBlockParam, type CodeExecutionTool20250522 as CodeExecutionTool20250522, type CodeExecutionTool20250825 as CodeExecutionTool20250825, type CodeExecutionTool20260120 as CodeExecutionTool20260120, type CodeExecutionTool20260521 as CodeExecutionTool20260521, type CodeExecutionToolResultBlock as CodeExecutionToolResultBlock, type CodeExecutionToolResultBlockContent as CodeExecutionToolResultBlockContent, type CodeExecutionToolResultBlockParam as CodeExecutionToolResultBlockParam, type CodeExecutionToolResultBlockParamContent as CodeExecutionToolResultBlockParamContent, type CodeExecutionToolResultError as CodeExecutionToolResultError, type CodeExecutionToolResultErrorCode as CodeExecutionToolResultErrorCode, type CodeExecutionToolResultErrorParam as CodeExecutionToolResultErrorParam, type ComputerCursorPositionConfig as ComputerCursorPositionConfig, type ComputerCursorPositionInput as ComputerCursorPositionInput, type ComputerCursorPositionToolUseBlock as ComputerCursorPositionToolUseBlock, type ComputerDoubleClickConfig as ComputerDoubleClickConfig, type ComputerDoubleClickInput as ComputerDoubleClickInput, type ComputerDoubleClickToolUseBlock as ComputerDoubleClickToolUseBlock, type ComputerHoldKeyConfig as ComputerHoldKeyConfig, type ComputerHoldKeyInput as ComputerHoldKeyInput, type ComputerHoldKeyToolUseBlock as ComputerHoldKeyToolUseBlock, type ComputerKeyConfig as ComputerKeyConfig, type ComputerKeyInput as ComputerKeyInput, type ComputerKeyToolUseBlock as ComputerKeyToolUseBlock, type ComputerLeftClickConfig as ComputerLeftClickConfig, type ComputerLeftClickDragConfig as ComputerLeftClickDragConfig, type ComputerLeftClickDragInput as ComputerLeftClickDragInput, type ComputerLeftClickDragToolUseBlock as ComputerLeftClickDragToolUseBlock, type ComputerLeftClickInput as ComputerLeftClickInput, type ComputerLeftClickToolUseBlock as ComputerLeftClickToolUseBlock, type ComputerLeftMouseDownConfig as ComputerLeftMouseDownConfig, type ComputerLeftMouseDownInput as ComputerLeftMouseDownInput, type ComputerLeftMouseDownToolUseBlock as ComputerLeftMouseDownToolUseBlock, type ComputerLeftMouseUpConfig as ComputerLeftMouseUpConfig, type ComputerLeftMouseUpInput as ComputerLeftMouseUpInput, type ComputerLeftMouseUpToolUseBlock as ComputerLeftMouseUpToolUseBlock, type ComputerMemberInput as ComputerMemberInput, type ComputerMemberName as ComputerMemberName, type ComputerMiddleClickConfig as ComputerMiddleClickConfig, type ComputerMiddleClickInput as ComputerMiddleClickInput, type ComputerMiddleClickToolUseBlock as ComputerMiddleClickToolUseBlock, type ComputerMouseMoveConfig as ComputerMouseMoveConfig, type ComputerMouseMoveInput as ComputerMouseMoveInput, type ComputerMouseMoveToolUseBlock as ComputerMouseMoveToolUseBlock, type ComputerRightClickConfig as ComputerRightClickConfig, type ComputerRightClickInput as ComputerRightClickInput, type ComputerRightClickToolUseBlock as ComputerRightClickToolUseBlock, type ComputerScreenshotConfig as ComputerScreenshotConfig, type ComputerScreenshotInput as ComputerScreenshotInput, type ComputerScreenshotToolUseBlock as ComputerScreenshotToolUseBlock, type ComputerScrollConfig as ComputerScrollConfig, type ComputerScrollDirection as ComputerScrollDirection, type ComputerScrollInput as ComputerScrollInput, type ComputerScrollToolUseBlock as ComputerScrollToolUseBlock, type ComputerToolUseBlock as ComputerToolUseBlock, type ComputerToolset20260801 as ComputerToolset20260801, type ComputerToolsetConfigs as ComputerToolsetConfigs, type ComputerTripleClickConfig as ComputerTripleClickConfig, type ComputerTripleClickInput as ComputerTripleClickInput, type ComputerTripleClickToolUseBlock as ComputerTripleClickToolUseBlock, type ComputerTypeConfig as ComputerTypeConfig, type ComputerTypeInput as ComputerTypeInput, type ComputerTypeToolUseBlock as ComputerTypeToolUseBlock, type ComputerWaitConfig as ComputerWaitConfig, type ComputerWaitInput as ComputerWaitInput, type ComputerWaitToolUseBlock as ComputerWaitToolUseBlock, type ComputerZoomConfig as ComputerZoomConfig, type ComputerZoomInput as ComputerZoomInput, type ComputerZoomToolUseBlock as ComputerZoomToolUseBlock, type Container as Container, type ContainerParams as ContainerParams, type ContainerSkill as ContainerSkill, type ContainerUploadBlock as ContainerUploadBlock, type ContainerUploadBlockParam as ContainerUploadBlockParam, type ContentBlock as ContentBlock, type ContentBlockDeltaEvent as ContentBlockDeltaEvent, type ContentBlockParam as ContentBlockParam, type ContentBlockStartEvent as ContentBlockStartEvent, type ContentBlockStopEvent as ContentBlockStopEvent, type ContentBlockSource as ContentBlockSource, type ContentBlockSourceContent as ContentBlockSourceContent, type Diagnostics as Diagnostics, type DiagnosticsParam as DiagnosticsParam, type DirectCaller as DirectCaller, type DocumentBlock as DocumentBlock, type DocumentBlockParam as DocumentBlockParam, type EncryptedCodeExecutionResultBlock as EncryptedCodeExecutionResultBlock, type EncryptedCodeExecutionResultBlockParam as EncryptedCodeExecutionResultBlockParam, type FileDocumentSource as FileDocumentSource, type FileImageSource as FileImageSource, type ImageBlockParam as ImageBlockParam, type ImageTransformationsParam as ImageTransformationsParam, type InputJSONDelta as InputJSONDelta, type JSONOutputFormat as JSONOutputFormat, type MemoryTool20250818 as MemoryTool20250818, type Message as Message, type MessageContentParam as MessageContentParam, type MessageCountTokensTool as MessageCountTokensTool, type MessageCreateParamsContainer as MessageCreateParamsContainer, type MessageDeltaEvent as MessageDeltaEvent, type MessageDeltaUsage as MessageDeltaUsage, type MessageParam as MessageParam, type MessageStartEvent as MessageStartEvent, type MessageStopEvent as MessageStopEvent, type MessageStreamEvent as MessageStreamEvent, type MessageTokensCount as MessageTokensCount, type Metadata as Metadata, type Model as Model, type OutputConfig as OutputConfig, type OutputTokensDetails as OutputTokensDetails, type PlainTextSource as PlainTextSource, type RawContentBlockDelta as RawContentBlockDelta, type RawContentBlockDeltaEvent as RawContentBlockDeltaEvent, type RawContentBlockStartEvent as RawContentBlockStartEvent, type RawContentBlockStopEvent as RawContentBlockStopEvent, type RawMessageDeltaEvent as RawMessageDeltaEvent, type RawMessageStartEvent as RawMessageStartEvent, type RawMessageStopEvent as RawMessageStopEvent, type RawMessageStreamEvent as RawMessageStreamEvent, type RedactedThinkingBlock as RedactedThinkingBlock, type RedactedThinkingBlockParam as RedactedThinkingBlockParam, type RefusalStopDetails as RefusalStopDetails, type SearchResultBlockParam as SearchResultBlockParam, type ServerToolCaller as ServerToolCaller, type ServerToolCaller20260120 as ServerToolCaller20260120, type ServerToolUsage as ServerToolUsage, type ServerToolUseBlock as ServerToolUseBlock, type ServerToolUseBlockParam as ServerToolUseBlockParam, type SignatureDelta as SignatureDelta, type SkillParams as SkillParams, type StopReason as StopReason, type SystemMessageParam as SystemMessageParam, type TextBlock as TextBlock, type TextBlockParam as TextBlockParam, type TextCitation as TextCitation, type TextCitationParam as TextCitationParam, type TextDelta as TextDelta, type TextEditorCodeExecutionCreateResultBlock as TextEditorCodeExecutionCreateResultBlock, type TextEditorCodeExecutionCreateResultBlockParam as TextEditorCodeExecutionCreateResultBlockParam, type TextEditorCodeExecutionStrReplaceResultBlock as TextEditorCodeExecutionStrReplaceResultBlock, type TextEditorCodeExecutionStrReplaceResultBlockParam as TextEditorCodeExecutionStrReplaceResultBlockParam, type TextEditorCodeExecutionToolResultBlock as TextEditorCodeExecutionToolResultBlock, type TextEditorCodeExecutionToolResultBlockParam as TextEditorCodeExecutionToolResultBlockParam, type TextEditorCodeExecutionToolResultError as TextEditorCodeExecutionToolResultError, type TextEditorCodeExecutionToolResultErrorCode as TextEditorCodeExecutionToolResultErrorCode, type TextEditorCodeExecutionToolResultErrorParam as TextEditorCodeExecutionToolResultErrorParam, type TextEditorCodeExecutionViewResultBlock as TextEditorCodeExecutionViewResultBlock, type TextEditorCodeExecutionViewResultBlockParam as TextEditorCodeExecutionViewResultBlockParam, type ThinkingBlock as ThinkingBlock, type ThinkingBlockParam as ThinkingBlockParam, type ThinkingConfigAdaptive as ThinkingConfigAdaptive, type ThinkingConfigBetweenTools as ThinkingConfigBetweenTools, type ThinkingConfigDisabled as ThinkingConfigDisabled, type ThinkingConfigEnabled as ThinkingConfigEnabled, type ThinkingConfigParam as ThinkingConfigParam, type ThinkingDelta as ThinkingDelta, type Tool as Tool, type ToolBash20250124 as ToolBash20250124, type ToolChoice as ToolChoice, type ToolChoiceAny as ToolChoiceAny, type ToolChoiceAuto as ToolChoiceAuto, type ToolChoiceNone as ToolChoiceNone, type ToolChoiceTool as ToolChoiceTool, type ToolReferenceBlock as ToolReferenceBlock, type ToolReferenceBlockParam as ToolReferenceBlockParam, type ToolResultBlockParam as ToolResultBlockParam, type ToolSearchToolBm25_20251119 as ToolSearchToolBm25_20251119, type ToolSearchToolRegex20251119 as ToolSearchToolRegex20251119, type ToolSearchToolResultBlock as ToolSearchToolResultBlock, type ToolSearchToolResultBlockParam as ToolSearchToolResultBlockParam, type ToolSearchToolResultError as ToolSearchToolResultError, type ToolSearchToolResultErrorCode as ToolSearchToolResultErrorCode, type ToolSearchToolResultErrorParam as ToolSearchToolResultErrorParam, type ToolSearchToolSearchResultBlock as ToolSearchToolSearchResultBlock, type ToolSearchToolSearchResultBlockParam as ToolSearchToolSearchResultBlockParam, type ToolTextEditor20250124 as ToolTextEditor20250124, type ToolTextEditor20250429 as ToolTextEditor20250429, type ToolTextEditor20250728 as ToolTextEditor20250728, type ToolUnion as ToolUnion, type ToolUseBlock as ToolUseBlock, type ToolUseBlockParam as ToolUseBlockParam, type ToolUseCaller as ToolUseCaller, type ToolsetToolUseBlock as ToolsetToolUseBlock, type URLImageSource as URLImageSource, type URLPDFSource as URLPDFSource, type Usage as Usage, type UserLocation as UserLocation, type UserMessageParam as UserMessageParam, type WebFetchBlock as WebFetchBlock, type WebFetchBlockParam as WebFetchBlockParam, type WebFetchTool20250910 as WebFetchTool20250910, type WebFetchTool20260209 as WebFetchTool20260209, type WebFetchTool20260309 as WebFetchTool20260309, type WebFetchTool20260318 as WebFetchTool20260318, type WebFetchToolResultBlock as WebFetchToolResultBlock, type WebFetchToolResultBlockParam as WebFetchToolResultBlockParam, type WebFetchToolResultErrorBlock as WebFetchToolResultErrorBlock, type WebFetchToolResultErrorBlockParam as WebFetchToolResultErrorBlockParam, type WebFetchToolResultErrorCode as WebFetchToolResultErrorCode, type WebFetchURLSourceAll as WebFetchURLSourceAll, type WebFetchURLSourceExcept as WebFetchURLSourceExcept, type WebFetchURLSourceNone as WebFetchURLSourceNone, type WebFetchURLSourceOnly as WebFetchURLSourceOnly, type WebFetchURLSourceToolReference as WebFetchURLSourceToolReference, type WebFetchURLSources as WebFetchURLSources, type WebSearchResultBlock as WebSearchResultBlock, type WebSearchResultBlockParam as WebSearchResultBlockParam, type WebSearchTool20250305 as WebSearchTool20250305, type WebSearchTool20260209 as WebSearchTool20260209, type WebSearchTool20260318 as WebSearchTool20260318, type WebSearchToolRequestError as WebSearchToolRequestError, type WebSearchToolResultBlock as WebSearchToolResultBlock, type WebSearchToolResultBlockContent as WebSearchToolResultBlockContent, type WebSearchToolResultBlockParam as WebSearchToolResultBlockParam, type WebSearchToolResultBlockParamContent as WebSearchToolResultBlockParamContent, type WebSearchToolResultError as WebSearchToolResultError, type WebSearchToolResultErrorCode as WebSearchToolResultErrorCode, type ResponseToolUseBlockUnion as ResponseToolUseBlockUnion, type ResponseBrowserToolUseBlock as ResponseBrowserToolUseBlock, type ResponseBrowserCloseTabToolUseBlock as ResponseBrowserCloseTabToolUseBlock, type ResponseBrowserDoubleClickToolUseBlock as ResponseBrowserDoubleClickToolUseBlock, type ResponseBrowserFileUploadToolUseBlock as ResponseBrowserFileUploadToolUseBlock, type ResponseBrowserFindToolUseBlock as ResponseBrowserFindToolUseBlock, type ResponseBrowserFormInputToolUseBlock as ResponseBrowserFormInputToolUseBlock, type ResponseBrowserGetPageTextToolUseBlock as ResponseBrowserGetPageTextToolUseBlock, type ResponseBrowserHoldKeyToolUseBlock as ResponseBrowserHoldKeyToolUseBlock, type ResponseBrowserHoverToolUseBlock as ResponseBrowserHoverToolUseBlock, type ResponseBrowserJavascriptExecToolUseBlock as ResponseBrowserJavascriptExecToolUseBlock, type ResponseBrowserKeyToolUseBlock as ResponseBrowserKeyToolUseBlock, type ResponseBrowserLeftClickDragToolUseBlock as ResponseBrowserLeftClickDragToolUseBlock, type ResponseBrowserLeftClickToolUseBlock as ResponseBrowserLeftClickToolUseBlock, type ResponseBrowserLeftMouseDownToolUseBlock as ResponseBrowserLeftMouseDownToolUseBlock, type ResponseBrowserLeftMouseUpToolUseBlock as ResponseBrowserLeftMouseUpToolUseBlock, type ResponseBrowserListTabsToolUseBlock as ResponseBrowserListTabsToolUseBlock, type ResponseBrowserMiddleClickToolUseBlock as ResponseBrowserMiddleClickToolUseBlock, type ResponseBrowserMouseMoveToolUseBlock as ResponseBrowserMouseMoveToolUseBlock, type ResponseBrowserNavigateToolUseBlock as ResponseBrowserNavigateToolUseBlock, type ResponseBrowserNewTabToolUseBlock as ResponseBrowserNewTabToolUseBlock, type ResponseBrowserReadConsoleToolUseBlock as ResponseBrowserReadConsoleToolUseBlock, type ResponseBrowserReadNetworkToolUseBlock as ResponseBrowserReadNetworkToolUseBlock, type ResponseBrowserReadPageToolUseBlock as ResponseBrowserReadPageToolUseBlock, type ResponseBrowserRightClickToolUseBlock as ResponseBrowserRightClickToolUseBlock, type ResponseBrowserScreenshotToolUseBlock as ResponseBrowserScreenshotToolUseBlock, type ResponseBrowserScrollToToolUseBlock as ResponseBrowserScrollToToolUseBlock, type ResponseBrowserScrollToolUseBlock as ResponseBrowserScrollToolUseBlock, type ResponseBrowserSwitchTabToolUseBlock as ResponseBrowserSwitchTabToolUseBlock, type ResponseBrowserTripleClickToolUseBlock as ResponseBrowserTripleClickToolUseBlock, type ResponseBrowserTypeToolUseBlock as ResponseBrowserTypeToolUseBlock, type ResponseBrowserWaitToolUseBlock as ResponseBrowserWaitToolUseBlock, type ResponseBrowserZoomToolUseBlock as ResponseBrowserZoomToolUseBlock, type ResponseComputerToolUseBlock as ResponseComputerToolUseBlock, type ResponseComputerCursorPositionToolUseBlock as ResponseComputerCursorPositionToolUseBlock, type ResponseComputerDoubleClickToolUseBlock as ResponseComputerDoubleClickToolUseBlock, type ResponseComputerHoldKeyToolUseBlock as ResponseComputerHoldKeyToolUseBlock, type ResponseComputerKeyToolUseBlock as ResponseComputerKeyToolUseBlock, type ResponseComputerLeftClickDragToolUseBlock as ResponseComputerLeftClickDragToolUseBlock, type ResponseComputerLeftClickToolUseBlock as ResponseComputerLeftClickToolUseBlock, type ResponseComputerLeftMouseDownToolUseBlock as ResponseComputerLeftMouseDownToolUseBlock, type ResponseComputerLeftMouseUpToolUseBlock as ResponseComputerLeftMouseUpToolUseBlock, type ResponseComputerMiddleClickToolUseBlock as ResponseComputerMiddleClickToolUseBlock, type ResponseComputerMouseMoveToolUseBlock as ResponseComputerMouseMoveToolUseBlock, type ResponseComputerRightClickToolUseBlock as ResponseComputerRightClickToolUseBlock, type ResponseComputerScreenshotToolUseBlock as ResponseComputerScreenshotToolUseBlock, type ResponseComputerScrollToolUseBlock as ResponseComputerScrollToolUseBlock, type ResponseComputerTripleClickToolUseBlock as ResponseComputerTripleClickToolUseBlock, type ResponseComputerTypeToolUseBlock as ResponseComputerTypeToolUseBlock, type ResponseComputerWaitToolUseBlock as ResponseComputerWaitToolUseBlock, type ResponseComputerZoomToolUseBlock as ResponseComputerZoomToolUseBlock, type MessageCreateParams as MessageCreateParams, type MessageCreateParamsNonStreaming as MessageCreateParamsNonStreaming, type MessageCreateParamsStreaming as MessageCreateParamsStreaming, type MessageStreamParams as MessageStreamParams, type MessageCountTokensParams as MessageCountTokensParams, }
+    export { Models as Models, type CapabilitySupport as CapabilitySupport, type ContextManagementCapability as ContextManagementCapability, type EffortCapability as EffortCapability, type ModelCapabilities as ModelCapabilities, type ModelInfo as ModelInfo, type ModelLine as ModelLine, type ServerToolsCapability as ServerToolsCapability, type ThinkingCapability as ThinkingCapability, type ThinkingTypes as ThinkingTypes, type ModelInfosPage as ModelInfosPage, type ModelRetrieveParams as ModelRetrieveParams, type ModelListParams as ModelListParams, }
+    export { Files as Files, type DeletedFile as DeletedFile, type FileMetadata as FileMetadata, type FileMetadataPageCursor as FileMetadataPageCursor, type FileListParams as FileListParams, type FileDeleteParams as FileDeleteParams, type FileDownloadParams as FileDownloadParams, type FileRetrieveMetadataParams as FileRetrieveMetadataParams, type FileUploadParams as FileUploadParams, }
+    export { Skills as Skills, type DeletedSkill as DeletedSkill, type Skill as Skill, type SkillSource as SkillSource, type SkillsPageCursor as SkillsPageCursor, type SkillCreateParams as SkillCreateParams, type SkillRetrieveParams as SkillRetrieveParams, type SkillListParams as SkillListParams, type SkillDeleteParams as SkillDeleteParams, }
+    export { UserProfiles as UserProfiles, type DeletedUserProfile as DeletedUserProfile, type UserProfile as UserProfile, type UserProfileAccessType as UserProfileAccessType, type UserProfileCyberProgram as UserProfileCyberProgram, type UserProfileCyberRequirements as UserProfileCyberRequirements, type UserProfileCyberTier as UserProfileCyberTier, type UserProfileEfsFeature as UserProfileEfsFeature, type UserProfileEfsProgram as UserProfileEfsProgram, type UserProfileEnforcementAction as UserProfileEnforcementAction, type UserProfileEnforcementActionBan as UserProfileEnforcementActionBan, type UserProfileEnforcementActionNextStep as UserProfileEnforcementActionNextStep, type UserProfileEnforcementActionReason as UserProfileEnforcementActionReason, type UserProfileEnforcementActionRestriction as UserProfileEnforcementActionRestriction, type UserProfileEnforcementStatus as UserProfileEnforcementStatus, type UserProfileExternalUserAccountStatus as UserProfileExternalUserAccountStatus, type UserProfileExternalUserDetails as UserProfileExternalUserDetails, type UserProfileExternalUserDetailsParams as UserProfileExternalUserDetailsParams, type UserProfileExternalUserEntityType as UserProfileExternalUserEntityType, type UserProfileListOrder as UserProfileListOrder, type UserProfileListOrderBy as UserProfileListOrderBy, type UserProfileProgramStatus as UserProfileProgramStatus, type UserProfilePrograms as UserProfilePrograms, type UserProfilesPageCursor as UserProfilesPageCursor, type UserProfileCreateParams as UserProfileCreateParams, type UserProfileRetrieveParams as UserProfileRetrieveParams, type UserProfileUpdateParams as UserProfileUpdateParams, type UserProfileListParams as UserProfileListParams, type UserProfileDeleteParams as UserProfileDeleteParams, }
+    export { Organization as Organization, type OrganizationInfo as OrganizationInfo, type OrganizationRole as OrganizationRole, }
+    export { Beta as Beta, type AnthropicBeta as AnthropicBeta, type BetaAPIError as BetaAPIError, type BetaAuthenticationError as BetaAuthenticationError, type BetaBillingError as BetaBillingError, type BetaCurrency as BetaCurrency, type BetaError as BetaError, type BetaErrorResponse as BetaErrorResponse, type BetaGatewayTimeoutError as BetaGatewayTimeoutError, type BetaInvalidRequestError as BetaInvalidRequestError, type BetaMonetaryAmount as BetaMonetaryAmount, type BetaNotFoundError as BetaNotFoundError, type BetaOverloadedError as BetaOverloadedError, type BetaPermissionError as BetaPermissionError, type BetaRateLimitError as BetaRateLimitError, }
+    /** (undocumented) */
+    export type APIErrorObject = API.APIErrorObject
+    /** (undocumented) */
+    export type AuthenticationError = API.AuthenticationError
+    /** (undocumented) */
+    export type BillingError = API.BillingError
+    /** (undocumented) */
+    export type ErrorObject = API.ErrorObject
+    /** (undocumented) */
+    export type ErrorResponse = API.ErrorResponse
+    /** (undocumented) */
+    export type ErrorType = API.ErrorType
+    /** (undocumented) */
+    export type GatewayTimeoutError = API.GatewayTimeoutError
+    /** (undocumented) */
+    export type InvalidRequestError = API.InvalidRequestError
+    /** (undocumented) */
+    export type NotFoundError = API.NotFoundError
+    /** (undocumented) */
+    export type OverloadedError = API.OverloadedError
+    /** (undocumented) */
+    export type PermissionError = API.PermissionError
+    /** (undocumented) */
+    export type RateLimitError = API.RateLimitError
+
+core/error.d.ts/
+  AnthropicError
+    /** (undocumented) */
+    export declare class AnthropicError extends Error
+
+  APIError
+    /** (undocumented) */
+    export declare class APIError<TStatus extends number | undefined = number | undefined, THeaders extends Headers | undefined = Headers | undefined, TError extends Object | undefined = Object | undefined> extends AnthropicError
+    /** HTTP status for the response that caused the error */
+    readonly status: TStatus
+    /** HTTP headers for the response that caused the error */
+    readonly headers: THeaders
+    /** JSON body of the response that caused the error */
+    readonly error: TError
+    /** (undocumented) */
+    readonly requestID: string | null | undefined
+    /** (undocumented) */
+    readonly workspaceID: string | null | undefined
+    /** The `error.type` from the API response body, e.g. `"rate_limit_error"` */
+    readonly type: ErrorType | null
+    /** (undocumented) */
+    constructor(status: TStatus, error: TError, message: string | undefined, headers: THeaders, type?: ErrorType | null)
+    /** (undocumented) */
+    static generate(status: number | undefined, errorResponse: Object | undefined, message: string | undefined, headers: Headers | undefined): APIError
+
+  APIUserAbortError
+    /** (undocumented) */
+    export declare class APIUserAbortError extends APIError<undefined, undefined, undefined>
+    /** (undocumented) */
+    constructor({ message }?: { message?: string; })
+
+  APIConnectionError
+    /** (undocumented) */
+    export declare class APIConnectionError extends APIError<undefined, undefined, undefined>
+    /** (undocumented) */
+    constructor({ message, cause }: { message?: string | undefined; cause?: Error | undefined; })
+
+  APIConnectionTimeoutError
+    /** (undocumented) */
+    export declare class APIConnectionTimeoutError extends APIConnectionError
+    /** (undocumented) */
+    constructor({ message }?: { message?: string; })
+
+  RetryableError
+    /**
+     * An error that opts into the SDK's retry policy: throw it (e.g. from
+     * middleware) to have the attempt retried.
+     *
+     * Note that the request will only be retried when `maxRetries` has not been exhausted.
+     */
+    export declare class RetryableError extends AnthropicError
+    /** (undocumented) */
+    constructor(message?: string, { cause }?: { cause?: unknown; })
+
+  BadRequestError
+    /** (undocumented) */
+    export declare class BadRequestError extends APIError<400, Headers>
+
+  AuthenticationError
+    /** (undocumented) */
+    export declare class AuthenticationError extends APIError<401, Headers>
+
+  PermissionDeniedError
+    /** (undocumented) */
+    export declare class PermissionDeniedError extends APIError<403, Headers>
+
+  NotFoundError
+    /** (undocumented) */
+    export declare class NotFoundError extends APIError<404, Headers>
+
+  ConflictError
+    /** (undocumented) */
+    export declare class ConflictError extends APIError<409, Headers>
+
+  UnprocessableEntityError
+    /** (undocumented) */
+    export declare class UnprocessableEntityError extends APIError<422, Headers>
+
+  RateLimitError
+    /** (undocumented) */
+    export declare class RateLimitError extends APIError<429, Headers>
+
+  InternalServerError
+    /** (undocumented) */
+    export declare class InternalServerError extends APIError<number, Headers>
+
+core/streaming.d.ts/
+  ServerSentEvent
+    /** (undocumented) */
+    export type ServerSentEvent
+    /** (undocumented) */
+    event: string | null
+    /** (undocumented) */
+    data: string
+    /** (undocumented) */
+    raw: string[]
+
+  Stream
+    /** (undocumented) */
+    export declare class Stream<Item> implements AsyncIterable<Item>
+    /** (undocumented) */
+    controller: AbortController
+    /** (undocumented) */
+    constructor(iterator: () => AsyncIterator<Item>, controller: AbortController, client?: BaseAnthropic)
+    /**
+     * Iterate the raw Server-Sent Events from `response` — `{event, data, raw}`
+     * objects, before any JSON parsing or event-name filtering.
+     *
+     * This reads `response.body` directly (not a clone), so the response is
+     * consumed. Use this in middleware that fully replaces the stream body; for
+     * read-only observation of parsed events, use `ctx.parse()` instead.
+     */
+    static rawEvents(response: Response, controller?: AbortController): AsyncGenerator<ServerSentEvent, void, unknown>
+    /** (undocumented) */
+    static fromSSEResponse<Item>(response: Response, controller: AbortController, client?: BaseAnthropic): Stream<Item>
+    /**
+     * Generates a Stream from a newline-separated ReadableStream
+     * where each item is a JSON value.
+     */
+    static fromReadableStream<Item>(readableStream: ReadableStream, controller: AbortController, client?: BaseAnthropic): Stream<Item>
+    /** (undocumented) */
+    [Symbol.asyncIterator](): AsyncIterator<Item>
+    /**
+     * Splits the stream into two streams which can be
+     * independently read from at different speeds.
+     */
+    tee(): [Stream<Item>, Stream<Item>]
+    /**
+     * Converts this stream to a newline-separated ReadableStream of
+     * JSON stringified values in the stream
+     * which can be turned back into a Stream with `Stream.fromReadableStream()`.
+     */
+    toReadableStream(): ReadableStream
+
+core/api-promise.d.ts/
+  APIPromise
+    /**
+     * A subclass of `Promise` providing additional helper methods
+     * for interacting with the SDK.
+     */
+    export declare class APIPromise<T> extends Promise<WithRequestID<T>>
+    /** (undocumented) */
+    constructor(client: BaseAnthropic, responsePromise: Promise<APIResponseProps>, parseResponse?: (client: BaseAnthropic, props: APIResponseProps) => PromiseOrValue<WithRequestID<T>>)
+    /**
+     * Gets the raw `Response` instance instead of parsing the response
+     * data.
+     *
+     * If you want to parse the response body but still get the `Response`
+     * instance, you can use {@link withResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    asResponse(): Promise<Response>
+    /**
+     * Gets the parsed response data, the raw `Response` instance and the ID of the request,
+     * returned via the `request-id` header which is useful for debugging requests and resporting
+     * issues to Anthropic.
+     *
+     * If you just want to get the raw `Response` instance without parsing it,
+     * you can use {@link asResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    withResponse(): Promise<{ data: T; response: Response; request_id: string | null | undefined; workspace_id: string | null | undefined; }>
+    /** (undocumented) */
+    then<TResult1 = WithRequestID<T>, TResult2 = never>(onfulfilled?: ((value: WithRequestID<T>) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>
+    /** (undocumented) */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<WithRequestID<T> | TResult>
+    /** (undocumented) */
+    finally(onfinally?: (() => void) | undefined | null): Promise<WithRequestID<T>>
+
+lib/MessageStream.d.ts/
+  MessageStreamEvents
+    /** (undocumented) */
+    export interface MessageStreamEvents<ParsedT = null>
+    /** (undocumented) */
+    connect: () => void
+    /** (undocumented) */
+    streamEvent: (event: MessageStreamEvent, snapshot: Message) => void
+    /** (undocumented) */
+    text: (textDelta: string, textSnapshot: string) => void
+    /** (undocumented) */
+    citation: (citation: TextCitation, citationsSnapshot: TextCitation[]) => void
+    /** (undocumented) */
+    inputJson: (partialJson: string, jsonSnapshot: unknown) => void
+    /** (undocumented) */
+    thinking: (thinkingDelta: string, thinkingSnapshot: string) => void
+    /** (undocumented) */
+    signature: (signature: string) => void
+    /** (undocumented) */
+    message: (message: ParsedMessage<ParsedT>) => void
+    /** (undocumented) */
+    contentBlock: (content: ContentBlock) => void
+    /** (undocumented) */
+    finalMessage: (message: ParsedMessage<ParsedT>) => void
+    /** (undocumented) */
+    error: (error: AnthropicError) => void
+    /** (undocumented) */
+    abort: (error: APIUserAbortError) => void
+    /** (undocumented) */
+    end: () => void
+
+  /** (undocumented) */
+  export type TracksToolInput = ToolUseBlock | ServerToolUseBlock
+  MessageStream
+    /** (undocumented) */
+    export declare class MessageStream<ParsedT = null> implements AsyncIterable<MessageStreamEvent>
+    /** (undocumented) */
+    messages: MessageParam[]
+    /** (undocumented) */
+    receivedMessages: ParsedMessage<ParsedT>[]
+    /** (undocumented) */
+    controller: AbortController
+    /** (undocumented) */
+    constructor(params: MessageCreateParamsBase | null, opts?: { logger?: Logger | undefined; /** The client that makes the request, for the stream to start its span and record the message on it. */ client?: BaseAnthropic | undefined; })
+    /** (undocumented) */
+    get response(): Response | null | undefined
+    /** (undocumented) */
+    get request_id(): string | null | undefined
+    /** (undocumented) */
+    get workspace_id(): string | null | undefined
+    /**
+     * Returns the `MessageStream` data, the raw `Response` instance and the ID of the request,
+     * returned vie the `request-id` header which is useful for debugging requests and resporting
+     * issues to Anthropic.
+     *
+     * This is the same as the `APIPromise.withResponse()` method.
+     *
+     * This method will raise an error if you created the stream using `MessageStream.fromReadableStream`
+     * as no `Response` is available.
+     */
+    withResponse(): Promise<{ data: MessageStream<ParsedT>; response: Response; request_id: string | null | undefined; workspace_id: string | null | undefined; }>
+    /**
+     * Intended for use on the frontend, consuming a stream produced with
+     * `.toReadableStream()` on the backend.
+     *
+     * Note that messages sent to the model do not appear in `.on('message')`
+     * in this context.
+     */
+    static fromReadableStream(stream: ReadableStream): MessageStream
+    /** (undocumented) */
+    static createMessage<ParsedT>(messages: Messages, params: MessageCreateParamsBase, options?: RequestOptions, { logger, client, }?: { logger?: Logger | undefined; /** The client that makes the request, for the stream to start its span and record the message on it. */ client?: BaseAnthropic | undefined; }): MessageStream<ParsedT>
+    /** (undocumented) */
+    get ended(): boolean
+    /** (undocumented) */
+    get errored(): boolean
+    /** (undocumented) */
+    get aborted(): boolean
+    /** (undocumented) */
+    abort(): void
+    /**
+     * Adds the listener function to the end of the listeners array for the event.
+     * No checks are made to see if the listener has already been added. Multiple calls passing
+     * the same combination of event and listener will result in the listener being added, and
+     * called, multiple times.
+     * @returns this MessageStream, so that calls can be chained
+     */
+    on<Event extends keyof MessageStreamEvents<ParsedT>>(event: Event, listener: MessageStreamEvents<ParsedT>[Event]): this
+    /**
+     * Removes the specified listener from the listener array for the event.
+     * off() will remove, at most, one instance of a listener from the listener array. If any single
+     * listener has been added multiple times to the listener array for the specified event, then
+     * off() must be called multiple times to remove each instance.
+     * @returns this MessageStream, so that calls can be chained
+     */
+    off<Event extends keyof MessageStreamEvents<ParsedT>>(event: Event, listener: MessageStreamEvents<ParsedT>[Event]): this
+    /**
+     * Adds a one-time listener function for the event. The next time the event is triggered,
+     * this listener is removed and then invoked.
+     * @returns this MessageStream, so that calls can be chained
+     */
+    once<Event extends keyof MessageStreamEvents<ParsedT>>(event: Event, listener: MessageStreamEvents<ParsedT>[Event]): this
+    /**
+     * This is similar to `.once()`, but returns a Promise that resolves the next time
+     * the event is triggered, instead of calling a listener callback.
+     * @returns a Promise that resolves the next time given event is triggered,
+     * or rejects if an error is emitted.  (If you request the 'error' event,
+     * returns a promise that resolves with the error).
+     *
+     * Example:
+     *
+     *   const message = await stream.emitted('message') // rejects if the stream errors
+     */
+    emitted<Event extends keyof MessageStreamEvents<ParsedT>>(event: Event): Promise<Parameters<MessageStreamEvents<ParsedT>[Event]> extends [infer Param] ? Param : Parameters<MessageStreamEvents<ParsedT>[Event]> extends [] ? void : Parameters<MessageStreamEvents<ParsedT>[Event]>>
+    /** (undocumented) */
+    done(): Promise<void>
+    /** (undocumented) */
+    get currentMessage(): Message | undefined
+    /**
+     * @returns a promise that resolves with the the final assistant Message response,
+     * or rejects if an error occurred or the stream ended prematurely without producing a Message.
+     * If structured outputs were used, this will be a ParsedMessage with a `parsed_output` field.
+     */
+    finalMessage(): Promise<ParsedMessage<ParsedT>>
+    /**
+     * @returns a promise that resolves with the the final assistant Message's text response, concatenated
+     * together if there are more than one text blocks.
+     * Rejects if an error occurred or the stream ended prematurely without producing a Message.
+     */
+    finalText(): Promise<string>
+    /** (undocumented) */
+    [Symbol.asyncIterator](): AsyncIterator<MessageStreamEvent>
+    /** (undocumented) */
+    toReadableStream(): ReadableStream
+
+resources/messages/messages.d.ts/
+  Messages
+    /** (undocumented) */
+    export declare class Messages extends APIResource
+    /** (undocumented) */
+    batches: BatchesAPI.Batches
+    /**
+     * Send a structured list of input messages with text and/or image content, and the
+     * model will generate the next message in the conversation.
+     *
+     * The Messages API can be used for either single queries or stateless multi-turn
+     * conversations.
+     *
+     * Learn more about the Messages API in our
+     * [user guide](https://platform.claude.com/docs/en/get-started)
+     *
+     * @example
+     * const message = await client.messages.create({
+     *   max_tokens: 1024,
+     *   messages: [{ content: 'Hello, world', role: 'user' }],
+     *   model: 'claude-opus-5-5',
+     * });
+     */
+    create(params: MessageCreateParamsNonStreaming, options?: RequestOptions): APIPromise<Message>
+    /** (undocumented) */
+    create(params: MessageCreateParamsStreaming, options?: RequestOptions): APIPromise<Stream<RawMessageStreamEvent>>
+    /** (undocumented) */
+    create(params: MessageCreateParamsBase, options?: RequestOptions): APIPromise<Stream<RawMessageStreamEvent> | Message>
+    /**
+     * Send a structured list of input messages with text and/or image content, along with an expected `output_config.format` and
+     * the response will be automatically parsed and available in the `parsed_output` property of the message.
+     *
+     * @example
+     * const message = await client.messages.parse({
+     *   model: 'claude-sonnet-5-5',
+     *   max_tokens: 1024,
+     *   messages: [{ role: 'user', content: 'What is 2+2?' }],
+     *   output_config: {
+     *     format: zodOutputFormat(z.object({ answer: z.number() })),
+     *   },
+     * });
+     *
+     * console.log(message.parsed_output?.answer); // 4
+     */
+    parse<Params extends MessageCreateParamsNonStreaming>(params: Params, options?: RequestOptions): APIPromise<ParsedMessage<ExtractParsedContentFromParams<Params>>>
+    /**
+     * Create a Message stream.
+     *
+     * If `output_config.format` is provided with a parseable format (like `zodOutputFormat()`),
+     * the final message will include a `parsed_output` property with the parsed content.
+     *
+     * @example
+     * const stream = client.messages.stream({
+     *   model: 'claude-sonnet-5-5',
+     *   max_tokens: 1024,
+     *   messages: [{ role: 'user', content: 'What is 2+2?' }],
+     *   output_config: {
+     *     format: zodOutputFormat(z.object({ answer: z.number() })),
+     *   },
+     * });
+     *
+     * const message = await stream.finalMessage();
+     * console.log(message.parsed_output?.answer); // 4
+     */
+    stream<Params extends MessageStreamParams>(body: Params, options?: RequestOptions): MessageStream<ExtractParsedContentFromParams<Params>>
+    /**
+     * Count the number of tokens in a Message.
+     *
+     * The Token Count API can be used to count the number of tokens in a Message,
+     * including tools, images, and documents, without creating it.
+     *
+     * Learn more about token counting in our
+     * [user guide](https://platform.claude.com/docs/en/build-with-claude/token-counting)
+     *
+     * @example
+     * const messageTokensCount =
+     *   await client.messages.countTokens({
+     *     messages: [{ content: 'Hello, world', role: 'user' }],
+     *     model: 'claude-opus-5-5',
+     *   });
+     */
+    countTokens(params: MessageCountTokensParams, options?: RequestOptions): APIPromise<MessageTokensCount>
+
+  AssistantMessageParam
+    /** (undocumented) */
+    export interface AssistantMessageParam
+    /** (undocumented) */
+    content: MessageContentParam
+    /** (undocumented) */
+    role: 'assistant'
+
+  Base64ImageSource
+    /** (undocumented) */
+    export interface Base64ImageSource
+    /** (undocumented) */
+    data: string
+    /** (undocumented) */
+    media_type: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+    /** (undocumented) */
+    type: 'base64'
+
+  Base64PDFSource
+    /** (undocumented) */
+    export interface Base64PDFSource
+    /** (undocumented) */
+    data: string
+    /** (undocumented) */
+    media_type: 'application/pdf'
+    /** (undocumented) */
+    type: 'base64'
+
+  CacheControlEphemeral
+    /** (undocumented) */
+    export interface CacheControlEphemeral
+    /** (undocumented) */
+    type: 'ephemeral'
+    /**
+     * The time-to-live for the cache control breakpoint.
+     *
+     * This may be one the following values:
+     *
+     * - `5m`: 5 minutes
+     * - `1h`: 1 hour
+     *
+     * Defaults to `5m`. See
+     * [prompt caching pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+     * for details.
+     */
+    ttl?: '5m' | '1h'
+
+  CacheCreation
+    /** (undocumented) */
+    export interface CacheCreation
+    /** The number of input tokens used to create the 1 hour cache entry. */
+    ephemeral_1h_input_tokens: number
+    /** The number of input tokens used to create the 5 minute cache entry. */
+    ephemeral_5m_input_tokens: number
+
+  CitationsDelta
+    /** (undocumented) */
+    export interface CitationsDelta
+    /** (undocumented) */
+    citation: CitationCharLocation | CitationPageLocation | CitationContentBlockLocation | CitationsWebSearchResultLocation | CitationsSearchResultLocation
+    /** (undocumented) */
+    type: 'citations_delta'
+
+  /**
+   * A tool that the client executes: the caller runs each `tool_use` request for it
+   * and returns the output in a `tool_result` block.
+   */
+  export type ClientToolUnion = Tool | ToolBash20250124 | BrowserToolset20260801 | MemoryTool20250818 | ComputerToolset20260801 | ToolTextEditor20250124 | ToolTextEditor20250429 | ToolTextEditor20250728
+  /** (undocumented) */
+  export type ContentBlock = TextBlock | ThinkingBlock | RedactedThinkingBlock | ToolUseBlock | ServerToolUseBlock | WebSearchToolResultBlock | WebFetchToolResultBlock | CodeExecutionToolResultBlock | BashCodeExecutionToolResultBlock | TextEditorCodeExecutionToolResultBlock | ToolSearchToolResultBlock | ContainerUploadBlock
+  /** (undocumented) */
+  export type ContentBlockParam = TextBlockParam | ImageBlockParam | DocumentBlockParam | SearchResultBlockParam | ThinkingBlockParam | RedactedThinkingBlockParam | ToolUseBlockParam | ToolResultBlockParam | ServerToolUseBlockParam | WebSearchToolResultBlockParam | WebFetchToolResultBlockParam | CodeExecutionToolResultBlockParam | BashCodeExecutionToolResultBlockParam | TextEditorCodeExecutionToolResultBlockParam | ToolSearchToolResultBlockParam | ContainerUploadBlockParam
+  ContentBlockSource
+    /** (undocumented) */
+    export interface ContentBlockSource
+    /** (undocumented) */
+    content: string | Array<ContentBlockSourceContent>
+    /** (undocumented) */
+    type: 'content'
+
+  /** (undocumented) */
+  export type ContentBlockSourceContent = TextBlockParam | ImageBlockParam
+  DirectCaller
+    /** Tool invocation directly from the model. */
+    export interface DirectCaller
+    /** (undocumented) */
+    type: 'direct'
+
+  DocumentBlock
+    /** (undocumented) */
+    export interface DocumentBlock
+    /** Citation configuration for the document */
+    citations: CitationsConfig | null
+    /** (undocumented) */
+    source: Base64PDFSource | PlainTextSource
+    /** The title of the document */
+    title: string | null
+    /** (undocumented) */
+    type: 'document'
+
+  DocumentBlockParam
+    /** (undocumented) */
+    export interface DocumentBlockParam
+    /** (undocumented) */
+    source: Base64PDFSource | PlainTextSource | ContentBlockSource | URLPDFSource | FileDocumentSource
+    /** (undocumented) */
+    type: 'document'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /** (undocumented) */
+    citations?: CitationsConfigParam | null
+    /** (undocumented) */
+    context?: string | null
+    /** (undocumented) */
+    title?: string | null
+
+  FileDocumentSource
+    /** (undocumented) */
+    export interface FileDocumentSource
+    /** (undocumented) */
+    file_id: string
+    /** (undocumented) */
+    type: 'file'
+
+  FileImageSource
+    /** (undocumented) */
+    export interface FileImageSource
+    /** (undocumented) */
+    file_id: string
+    /** (undocumented) */
+    type: 'file'
+
+  ImageBlockParam
+    /** (undocumented) */
+    export interface ImageBlockParam
+    /** (undocumented) */
+    source: Base64ImageSource | URLImageSource | FileImageSource
+    /** (undocumented) */
+    type: 'image'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /**
+     * Configures the transformations the server applies to this image before the model
+     * observes it. Each key names a condition the server transforms images for; its
+     * value selects the transformation applied. Omitted keys keep their default
+     * behavior, and an empty object is equivalent to omitting the field.
+     */
+    transformations?: ImageTransformationsParam | null
+
+  InputJSONDelta
+    /** (undocumented) */
+    export interface InputJSONDelta
+    /** (undocumented) */
+    partial_json: string
+    /** (undocumented) */
+    type: 'input_json_delta'
+
+  JSONOutputFormat
+    /** (undocumented) */
+    export interface JSONOutputFormat
+    /** The JSON schema of the format */
+    schema: { [key: string]: unknown; }
+    /** (undocumented) */
+    type: 'json_schema'
+
+  Message
+    /** (undocumented) */
+    export interface Message
+    /**
+     * Unique object identifier.
+     *
+     * The format and length of IDs may change over time.
+     */
+    id: string
+    /**
+     * Information about the container used in this request.
+     *
+     * This will be non-null if a container tool (e.g. code execution) was used.
+     */
+    container: Container | null
+    /**
+     * Content generated by the model.
+     *
+     * This is an array of content blocks, each of which has a `type` that determines
+     * its shape.
+     *
+     * Example:
+     *
+     * [{ "type": "text", "text": "Hi, I'm Claude." }]
+     *
+     * If the request input `messages` ended with an `assistant` turn, then the
+     * response `content` will continue directly from that last turn. You can use this
+     * to constrain the model's output.
+     *
+     * For example, if the input `messages` were:
+     *
+     * [
+     *   {
+     *     "role": "user",
+     *     "content": "What's the Greek name for Sun? (A) Sol (B) Helios (C) Sun"
+     *   },
+     *   { "role": "assistant", "content": "The best answer is (" }
+     * ]
+     *
+     * Then the response `content` might be:
+     *
+     * [{ "type": "text", "text": "B)" }]
+     */
+    content: Array<ContentBlock>
+    /**
+     * Request-level diagnostics. `null` when the request did not supply `diagnostics`,
+     * or when it did and no prompt-cache divergence was detected.
+     */
+    diagnostics: Diagnostics | null
+    /**
+     * The model that will complete your prompt.
+     *
+     * See [models](https://docs.anthropic.com/en/docs/models-overview) for additional
+     * details and options.
+     */
+    model: Model
+    /**
+     * Conversational role of the generated message.
+     *
+     * This will always be `"assistant"`.
+     */
+    role: 'assistant'
+    /**
+     * Structured information about why model output stopped.
+     *
+     * This is `null` when the `stop_reason` has no additional detail to report.
+     */
+    stop_details: RefusalStopDetails | null
+    /**
+     * The reason that we stopped.
+     *
+     * This may be one the following values:
+     *
+     * - `"end_turn"`: the model reached a natural stopping point
+     * - `"max_tokens"`: we exceeded the requested `max_tokens` or the model's maximum
+     * - `"stop_sequence"`: one of your provided custom `stop_sequences` was generated
+     * - `"tool_use"`: the model invoked one or more tools
+     * - `"pause_turn"`: we paused a long-running turn. You may provide the response
+     *   back as-is in a subsequent request to let the model continue.
+     * - `"refusal"`: when streaming classifiers intervene to handle potential policy
+     *   violations
+     * - `"model_context_window_exceeded"`: we exceeded the model's context window
+     *
+     * In non-streaming mode this value is always non-null. In streaming mode, it is
+     * null in the `message_start` event and non-null otherwise.
+     */
+    stop_reason: StopReason | null
+    /**
+     * Which custom stop sequence was generated, if any.
+     *
+     * This value will be a non-null string if one of your custom stop sequences was
+     * generated.
+     */
+    stop_sequence: string | null
+    /**
+     * Object type.
+     *
+     * For Messages, this is always `"message"`.
+     */
+    type: 'message'
+    /**
+     * Billing and rate-limit usage.
+     *
+     * Anthropic's API bills and rate-limits by token counts, as tokens represent the
+     * underlying cost to our systems.
+     *
+     * Under the hood, the API transforms requests into a format suitable for the
+     * model. The model's output then goes through a parsing stage before becoming an
+     * API response. As a result, the token counts in `usage` will not match one-to-one
+     * with the exact visible content of an API request or response.
+     *
+     * For example, `output_tokens` will be non-zero, even for an empty string response
+     * from Claude.
+     *
+     * Total input tokens in a request is the summation of `input_tokens`,
+     * `cache_creation_input_tokens`, and `cache_read_input_tokens`.
+     */
+    usage: Usage
+
+  /** (undocumented) */
+  export type MessageContentParam = string | Array<ContentBlockParam>
+  /** (undocumented) */
+  export type MessageCountTokensTool = Tool | ToolBash20250124 | CodeExecutionTool20250522 | CodeExecutionTool20250825 | CodeExecutionTool20260120 | CodeExecutionTool20260521 | BrowserToolset20260801 | MemoryTool20250818 | ComputerToolset20260801 | ToolTextEditor20250124 | ToolTextEditor20250429 | ToolTextEditor20250728 | WebSearchTool20250305 | WebFetchTool20250910 | WebSearchTool20260209 | WebFetchTool20260209 | WebFetchTool20260309 | WebSearchTool20260318 | WebFetchTool20260318 | ToolSearchToolBm25_20251119 | ToolSearchToolRegex20251119
+  /** Container identifier for reuse across requests. */
+  export type MessageCreateParamsContainer = ContainerParams | string
+  MessageDeltaUsage
+    /** (undocumented) */
+    export interface MessageDeltaUsage
+    /** The cumulative number of input tokens used to create the cache entry. */
+    cache_creation_input_tokens: number | null
+    /** The cumulative number of input tokens read from the cache. */
+    cache_read_input_tokens: number | null
+    /** The cumulative number of input tokens which were used. */
+    input_tokens: number | null
+    /** The cumulative number of output tokens which were used. */
+    output_tokens: number
+    /**
+     * Breakdown of output tokens by category.
+     *
+     * `output_tokens` remains the inclusive, authoritative total used for billing.
+     * This object provides a read-only decomposition for observability — for example,
+     * how many of the billed output tokens were spent on internal reasoning that may
+     * have been summarized before being returned to you.
+     */
+    output_tokens_details: OutputTokensDetails | null
+    /** The number of server tool requests. */
+    server_tool_use: ServerToolUsage | null
+
+  /** (undocumented) */
+  export type MessageParam = UserMessageParam | AssistantMessageParam | SystemMessageParam
+  MessageTokensCount
+    /** (undocumented) */
+    export interface MessageTokensCount
+    /**
+     * The total number of tokens across the provided list of messages, system prompt,
+     * and tools.
+     */
+    input_tokens: number
+
+  Metadata
+    /** (undocumented) */
+    export interface Metadata
+    /**
+     * An external identifier for the user who is associated with the request.
+     *
+     * This should be a uuid, hash value, or other opaque identifier. Anthropic may use
+     * this id to help detect abuse. Do not include any identifying information such as
+     * name, email address, or phone number.
+     */
+    user_id?: string | null
+
+  /**
+   * The model that will complete your prompt.
+   *
+   * See [models](https://docs.anthropic.com/en/docs/models-overview) for additional
+   * details and options.
+   */
+  export type Model = 'claude-haiku-5-5' | 'claude-sonnet-5-5' | 'claude-fable-5-1' | 'claude-opus-5-5' | 'claude-mythos-5-1' | 'claude-sonnet-5' | 'claude-fable-5' | 'claude-mythos-5' | 'claude-opus-5' | 'claude-opus-4-8' | 'claude-opus-4-7' | 'claude-mythos-preview' | 'claude-opus-4-6' | 'claude-sonnet-4-6' | 'claude-haiku-4-5' | 'claude-haiku-4-5-20251001' | 'claude-opus-4-5' | 'claude-opus-4-5-20251101' | 'claude-sonnet-4-5' | 'claude-sonnet-4-5-20250929' | (string & {})
+  OutputConfig
+    /** (undocumented) */
+    export interface OutputConfig
+    /**
+     * How much effort the model should put into its response. Higher effort levels may
+     * result in more thorough analysis but take longer.
+     *
+     * Valid values are `low`, `medium`, `high`, `xhigh`, or `max`.
+     */
+    effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max' | null
+    /**
+     * A schema to specify Claude's output format in responses. See
+     * [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+     */
+    format?: JSONOutputFormat | null
+
+  OutputTokensDetails
+    /** (undocumented) */
+    export interface OutputTokensDetails
+    /**
+     * Number of output tokens the model generated as internal reasoning, including the
+     * thinking-block delimiter tokens.
+     *
+     * Reflects the raw reasoning the model produced, not the (possibly shorter)
+     * summarized thinking text returned in the response body. Computed by
+     * re-tokenizing the raw reasoning text, so it may differ from the model's exact
+     * generation count by a small number of tokens. Always ≤ `output_tokens`;
+     * `output_tokens - thinking_tokens` approximates the non-reasoning output.
+     */
+    thinking_tokens: number
+
+  PlainTextSource
+    /** (undocumented) */
+    export interface PlainTextSource
+    /** (undocumented) */
+    data: string
+    /** (undocumented) */
+    media_type: 'text/plain'
+    /** (undocumented) */
+    type: 'text'
+
+  /** (undocumented) */
+  export type RawContentBlockDelta = TextDelta | InputJSONDelta | CitationsDelta | ThinkingDelta | SignatureDelta
+  RawContentBlockDeltaEvent
+    /** (undocumented) */
+    export interface RawContentBlockDeltaEvent
+    /** (undocumented) */
+    delta: RawContentBlockDelta
+    /** (undocumented) */
+    index: number
+    /** (undocumented) */
+    type: 'content_block_delta'
+
+  RawContentBlockStartEvent
+    /** (undocumented) */
+    export interface RawContentBlockStartEvent
+    /** (undocumented) */
+    content_block: TextBlock | ThinkingBlock | RedactedThinkingBlock | ToolUseBlock | ServerToolUseBlock | WebSearchToolResultBlock | WebFetchToolResultBlock | CodeExecutionToolResultBlock | BashCodeExecutionToolResultBlock | TextEditorCodeExecutionToolResultBlock | ToolSearchToolResultBlock | ContainerUploadBlock
+    /** (undocumented) */
+    index: number
+    /** (undocumented) */
+    type: 'content_block_start'
+
+  RawContentBlockStopEvent
+    /** (undocumented) */
+    export interface RawContentBlockStopEvent
+    /** (undocumented) */
+    index: number
+    /** (undocumented) */
+    type: 'content_block_stop'
+
+  RawMessageDeltaEvent
+    /** (undocumented) */
+    export interface RawMessageDeltaEvent
+    /** (undocumented) */
+    delta: RawMessageDeltaEvent.Delta
+    /** (undocumented) */
+    type: 'message_delta'
+    /**
+     * Billing and rate-limit usage.
+     *
+     * Anthropic's API bills and rate-limits by token counts, as tokens represent the
+     * underlying cost to our systems.
+     *
+     * Under the hood, the API transforms requests into a format suitable for the
+     * model. The model's output then goes through a parsing stage before becoming an
+     * API response. As a result, the token counts in `usage` will not match one-to-one
+     * with the exact visible content of an API request or response.
+     *
+     * For example, `output_tokens` will be non-zero, even for an empty string response
+     * from Claude.
+     *
+     * Total input tokens in a request is the summation of `input_tokens`,
+     * `cache_creation_input_tokens`, and `cache_read_input_tokens`.
+     */
+    usage: MessageDeltaUsage
+
+  RawMessageDeltaEvent/
+    /** (undocumented) */
+    Delta
+      /** (undocumented) */
+      interface Delta
+      /**
+       * Information about the container used in this request.
+       *
+       * This will be non-null if a container tool (e.g. code execution) was used.
+       */
+      container: MessagesAPI.Container | null
+      /**
+       * Structured information about why model output stopped.
+       *
+       * This is `null` when the `stop_reason` has no additional detail to report.
+       */
+      stop_details: MessagesAPI.RefusalStopDetails | null
+      /** (undocumented) */
+      stop_reason: MessagesAPI.StopReason | null
+      /** (undocumented) */
+      stop_sequence: string | null
+
+  RawMessageStartEvent
+    /** (undocumented) */
+    export interface RawMessageStartEvent
+    /** (undocumented) */
+    message: Message
+    /** (undocumented) */
+    type: 'message_start'
+
+  RawMessageStopEvent
+    /** (undocumented) */
+    export interface RawMessageStopEvent
+    /** (undocumented) */
+    type: 'message_stop'
+
+  /** (undocumented) */
+  export type RawMessageStreamEvent = RawMessageStartEvent | RawMessageDeltaEvent | RawMessageStopEvent | RawContentBlockStartEvent | RawContentBlockDeltaEvent | RawContentBlockStopEvent
+  RedactedThinkingBlock
+    /** (undocumented) */
+    export interface RedactedThinkingBlock
+    /**
+     * The contents of this redacted thinking block, returned when portions of the
+     * model's thinking were safety-redacted. This field is opaque and encrypted, with
+     * no readable content.
+     *
+     * Pass `redacted_thinking` blocks back to the API unchanged when continuing a
+     * multi-turn conversation.
+     *
+     * See
+     * [extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking#redacted-thinking-blocks)
+     * for details.
+     */
+    data: string
+    /** (undocumented) */
+    type: 'redacted_thinking'
+
+  RedactedThinkingBlockParam
+    /** (undocumented) */
+    export interface RedactedThinkingBlockParam
+    /**
+     * The `data` value of this redacted thinking block, exactly as returned by the API
+     * in a previous response. Opaque and encrypted; pass it back unchanged.
+     */
+    data: string
+    /** (undocumented) */
+    type: 'redacted_thinking'
+
+  RefusalStopDetails
+    /** Structured information about a refusal. */
+    export interface RefusalStopDetails
+    /**
+     * The policy category that triggered the refusal.
+     *
+     * `null` when the refusal doesn't map to a named category.
+     *
+     * - `cyber` - The request could enable cyber harm, such as malware or exploit
+     *   development. Benign cybersecurity work can also trigger this category.
+     * - `bio` - The request could enable biological harm, such as dangerous lab
+     *   methods. Beneficial life sciences work can also trigger this category.
+     * - `frontier_llm` - The request could assist the development of competing AI
+     *   models, which is restricted under
+     *   [Anthropic's commercial terms](https://www.anthropic.com/legal/commercial-terms).
+     *   Benign machine learning work can also trigger this category.
+     * - `reasoning_extraction` - The request asks the model to reproduce its internal
+     *   reasoning in the response text. To get reasoning in a structured form instead,
+     *   use
+     *   [adaptive thinking](https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking).
+     * - `general_harms` - The request could be related to an area that was determined
+     *   as harmful. Benign work might sometimes trigger this category.
+     */
+    category: 'cyber' | 'bio' | 'frontier_llm' | 'reasoning_extraction' | 'general_harms' | null
+    /**
+     * Human-readable explanation of the refusal.
+     *
+     * This text is not guaranteed to be stable. `null` when no explanation is
+     * available for the category.
+     */
+    explanation: string | null
+    /** (undocumented) */
+    type: 'refusal'
+
+  SearchResultBlockParam
+    /** (undocumented) */
+    export interface SearchResultBlockParam
+    /** (undocumented) */
+    content: Array<TextBlockParam>
+    /** (undocumented) */
+    source: string
+    /** (undocumented) */
+    title: string
+    /** (undocumented) */
+    type: 'search_result'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /** (undocumented) */
+    citations?: CitationsConfigParam
+
+  ServerToolUsage
+    /** (undocumented) */
+    export interface ServerToolUsage
+    /** The number of web fetch tool requests. */
+    web_fetch_requests: number
+    /** The number of web search tool requests. */
+    web_search_requests: number
+
+  ServerToolUseBlock
+    /** (undocumented) */
+    export interface ServerToolUseBlock
+    /** (undocumented) */
+    id: string
+    /** (undocumented) */
+    caller: DirectCaller | ServerToolCaller | ServerToolCaller20260120
+    /** (undocumented) */
+    input: unknown
+    /** (undocumented) */
+    name: 'web_search' | 'web_fetch' | 'code_execution' | 'bash_code_execution' | 'text_editor_code_execution' | 'tool_search_tool_regex' | 'tool_search_tool_bm25'
+    /** (undocumented) */
+    type: 'server_tool_use'
+
+  ServerToolUseBlockParam
+    /** (undocumented) */
+    export interface ServerToolUseBlockParam
+    /** (undocumented) */
+    id: string
+    /** (undocumented) */
+    input: unknown
+    /** (undocumented) */
+    name: 'web_search' | 'web_fetch' | 'code_execution' | 'bash_code_execution' | 'text_editor_code_execution' | 'tool_search_tool_regex' | 'tool_search_tool_bm25'
+    /** (undocumented) */
+    type: 'server_tool_use'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /** (undocumented) */
+    caller?: DirectCaller | ServerToolCaller | ServerToolCaller20260120
+
+  SignatureDelta
+    /** (undocumented) */
+    export interface SignatureDelta
+    /**
+     * The `signature` for this thinking block: an opaque value used to verify that the
+     * block was generated by Claude when it is passed back to the API. Delivered in a
+     * `signature_delta` event just before the block's `content_block_stop` event.
+     */
+    signature: string
+    /** (undocumented) */
+    type: 'signature_delta'
+
+  /** (undocumented) */
+  export type StopReason = 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use' | 'pause_turn' | 'refusal' | 'model_context_window_exceeded'
+  SystemMessageParam
+    /** (undocumented) */
+    export interface SystemMessageParam
+    /** (undocumented) */
+    content: string | Array<TextBlockParam>
+    /** (undocumented) */
+    role: 'system'
+
+  TextBlock
+    /** (undocumented) */
+    export interface TextBlock
+    /**
+     * Citations supporting the text block.
+     *
+     * The type of citation returned will depend on the type of document being cited.
+     * Citing a PDF results in `page_location`, plain text results in `char_location`,
+     * and content document results in `content_block_location`.
+     */
+    citations: Array<TextCitation> | null
+    /** (undocumented) */
+    text: string
+    /** (undocumented) */
+    type: 'text'
+
+  TextBlockParam
+    /** (undocumented) */
+    export interface TextBlockParam
+    /** (undocumented) */
+    text: string
+    /** (undocumented) */
+    type: 'text'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /** (undocumented) */
+    citations?: Array<TextCitationParam> | null
+
+  /** (undocumented) */
+  export type TextCitation = CitationCharLocation | CitationPageLocation | CitationContentBlockLocation | CitationsWebSearchResultLocation | CitationsSearchResultLocation
+  /** (undocumented) */
+  export type TextCitationParam = CitationCharLocationParam | CitationPageLocationParam | CitationContentBlockLocationParam | CitationWebSearchResultLocationParam | CitationSearchResultLocationParam
+  TextDelta
+    /** (undocumented) */
+    export interface TextDelta
+    /** (undocumented) */
+    text: string
+    /** (undocumented) */
+    type: 'text_delta'
+
+  ThinkingBlock
+    /** (undocumented) */
+    export interface ThinkingBlock
+    /**
+     * A value used to verify that this thinking block was generated by Claude when it
+     * is passed back to the API.
+     *
+     * This is an opaque field and should not be interpreted or parsed. When passing
+     * thinking blocks back to the API (required when using tools with extended
+     * thinking), pass them back exactly as received, with this field intact.
+     *
+     * See
+     * [extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking)
+     * for details.
+     */
+    signature: string
+    /** The text of Claude's thinking process for this block. */
+    thinking: string
+    /** (undocumented) */
+    type: 'thinking'
+
+  ThinkingBlockParam
+    /** (undocumented) */
+    export interface ThinkingBlockParam
+    /**
+     * The `signature` value of this thinking block, exactly as returned by the API in
+     * a previous response. Used to verify that the block was generated by Claude.
+     *
+     * Thinking blocks must be passed back unmodified and in their original order; a
+     * modified block results in a 400 `invalid_request_error`.
+     */
+    signature: string
+    /** The `thinking` text of this block as returned by the API. */
+    thinking: string
+    /** (undocumented) */
+    type: 'thinking'
+
+  ThinkingConfigAdaptive
+    /** (undocumented) */
+    export interface ThinkingConfigAdaptive
+    /** (undocumented) */
+    type: 'adaptive'
+    /**
+     * Controls how thinking content appears in the response. When set to `summarized`,
+     * thinking is returned normally. When set to `omitted`, thinking content is
+     * redacted but a signature is returned for multi-turn continuity. The default
+     * depends on the model; see
+     * [Controlling thinking display](https://platform.claude.com/docs/en/build-with-claude/thinking#controlling-thinking-display).
+     */
+    display?: 'summarized' | 'omitted' | null
+
+  ThinkingConfigBetweenTools
+    /** (undocumented) */
+    export interface ThinkingConfigBetweenTools
+    /** (undocumented) */
+    type: 'between_tools'
+
+  ThinkingConfigDisabled
+    /** (undocumented) */
+    export interface ThinkingConfigDisabled
+    /** (undocumented) */
+    type: 'disabled'
+
+  ThinkingConfigEnabled
+    /** (undocumented) */
+    export interface ThinkingConfigEnabled
+    /**
+     * Determines how many tokens Claude can use for its internal reasoning process.
+     * Larger budgets can enable more thorough analysis for complex problems, improving
+     * response quality.
+     *
+     * Must be ≥1024 and less than `max_tokens`.
+     *
+     * See
+     * [extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking)
+     * for details.
+     */
+    budget_tokens: number
+    /** (undocumented) */
+    type: 'enabled'
+    /**
+     * Controls how thinking content appears in the response. When set to `summarized`,
+     * thinking is returned normally. When set to `omitted`, thinking content is
+     * redacted but a signature is returned for multi-turn continuity. The default
+     * depends on the model; see
+     * [Controlling thinking display](https://platform.claude.com/docs/en/build-with-claude/thinking#controlling-thinking-display).
+     */
+    display?: 'summarized' | 'omitted' | null
+
+  /**
+   * Configuration for Claude's thinking.
+   *
+   * With `{"type": "adaptive"}`, Claude decides when and how much to think. With
+   * `{"type": "enabled"}` (manual extended thinking), you set a `budget_tokens` of
+   * at least 1,024. Thinking tokens count toward your `max_tokens` limit.
+   *
+   * Which `type` values are accepted, and what happens when you omit `thinking`,
+   * depend on the model. See
+   * [thinking](https://platform.claude.com/docs/en/build-with-claude/thinking#configuring-thinking)
+   * for each model's behavior.
+   */
+  export type ThinkingConfigParam = ThinkingConfigEnabled | ThinkingConfigDisabled | ThinkingConfigBetweenTools | ThinkingConfigAdaptive
+  ThinkingDelta
+    /** (undocumented) */
+    export interface ThinkingDelta
+    /**
+     * The incremental `thinking` text for this content block. Concatenate the
+     * `thinking` values of successive `thinking_delta` events to assemble the block's
+     * full `thinking` value.
+     */
+    thinking: string
+    /** (undocumented) */
+    type: 'thinking_delta'
+
+  Tool
+    /** (undocumented) */
+    export interface Tool
+    /**
+     * [JSON schema](https://json-schema.org/draft/2020-12) for this tool's input.
+     *
+     * This defines the shape of the `input` that your tool accepts and that the model
+     * will produce.
+     */
+    input_schema: Tool.InputSchema
+    /**
+     * Name of the tool.
+     *
+     * This is how the tool will be called by the model and in `tool_use` blocks.
+     */
+    name: string
+    /** (undocumented) */
+    allowed_callers?: Array<'direct' | 'code_execution_20250825' | 'code_execution_20260120' | 'code_execution_20260521'>
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /**
+     * If true, tool will not be included in initial system prompt. Only loaded when
+     * returned via tool_reference from tool search.
+     */
+    defer_loading?: boolean
+    /**
+     * Description of what this tool does.
+     *
+     * Tool descriptions should be as detailed as possible. The more information that
+     * the model has about what the tool is and how to use it, the better it will
+     * perform. You can use natural language descriptions to reinforce important
+     * aspects of the tool input JSON schema.
+     */
+    description?: string
+    /**
+     * Enable eager input streaming for this tool. When true, tool input parameters
+     * will be streamed incrementally as they are generated, and types will be inferred
+     * on-the-fly rather than buffering the full JSON output. When false, streaming is
+     * disabled for this tool even if the fine-grained-tool-streaming beta is active.
+     * When null (default), uses the default behavior based on beta headers.
+     */
+    eager_input_streaming?: boolean | null
+    /** (undocumented) */
+    input_examples?: Array<{ [key: string]: unknown; }>
+    /** When true, guarantees schema validation on tool names and inputs */
+    strict?: boolean
+    /** (undocumented) */
+    type?: 'custom' | null
+
+  Tool/
+    /** (undocumented) */
+    InputSchema
+      /**
+       * [JSON schema](https://json-schema.org/draft/2020-12) for this tool's input.
+       *
+       * This defines the shape of the `input` that your tool accepts and that the model
+       * will produce.
+       */
+      interface InputSchema
+      /** (undocumented) */
+      type: 'object'
+      /** (undocumented) */
+      properties?: unknown | null
+      /** (undocumented) */
+      required?: Array<string> | null
+      /** (undocumented) */
+      [k: string]: unknown
+
+  /**
+   * How the model should use the provided tools. The model can use a specific tool,
+   * any available tool, decide by itself, or not use tools at all.
+   */
+  export type ToolChoice = ToolChoiceAuto | ToolChoiceAny | ToolChoiceTool | ToolChoiceNone
+  ToolChoiceAny
+    /** The model will use any available tools. */
+    export interface ToolChoiceAny
+    /** (undocumented) */
+    type: 'any'
+    /**
+     * Whether to disable parallel tool use.
+     *
+     * Defaults to `false`. If set to `true`, the model will output exactly one tool
+     * use.
+     */
+    disable_parallel_tool_use?: boolean
+
+  ToolChoiceAuto
+    /** The model will automatically decide whether to use tools. */
+    export interface ToolChoiceAuto
+    /** (undocumented) */
+    type: 'auto'
+    /**
+     * Whether to disable parallel tool use.
+     *
+     * Defaults to `false`. If set to `true`, the model will output at most one tool
+     * use.
+     */
+    disable_parallel_tool_use?: boolean
+
+  ToolChoiceNone
+    /** The model will not be allowed to use tools. */
+    export interface ToolChoiceNone
+    /** (undocumented) */
+    type: 'none'
+
+  ToolChoiceTool
+    /** The model will use the specified tool with `tool_choice.name`. */
+    export interface ToolChoiceTool
+    /** The name of the tool to use. */
+    name: string
+    /** (undocumented) */
+    type: 'tool'
+    /**
+     * Whether to disable parallel tool use.
+     *
+     * Defaults to `false`. If set to `true`, the model will output exactly one tool
+     * use.
+     */
+    disable_parallel_tool_use?: boolean
+
+  ToolReferenceBlock
+    /** (undocumented) */
+    export interface ToolReferenceBlock
+    /** (undocumented) */
+    tool_name: string
+    /** (undocumented) */
+    type: 'tool_reference'
+
+  ToolReferenceBlockParam
+    /** Tool reference block that can be included in tool_result content. */
+    export interface ToolReferenceBlockParam
+    /** (undocumented) */
+    tool_name: string
+    /** (undocumented) */
+    type: 'tool_reference'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+
+  ToolResultBlockParam
+    /** (undocumented) */
+    export interface ToolResultBlockParam
+    /** (undocumented) */
+    tool_use_id: string
+    /** (undocumented) */
+    type: 'tool_result'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /** (undocumented) */
+    content?: string | Array<TextBlockParam | ImageBlockParam | SearchResultBlockParam | DocumentBlockParam | ToolReferenceBlockParam | BrowserStateBlockParam>
+    /** (undocumented) */
+    is_error?: boolean
+    /** For a toolset member tool_result, the toolset family of the paired tool_use. */
+    toolset_name?: string | null
+
+  /** (undocumented) */
+  export type ToolUnion = Tool | ToolBash20250124 | CodeExecutionTool20250522 | CodeExecutionTool20250825 | CodeExecutionTool20260120 | CodeExecutionTool20260521 | BrowserToolset20260801 | MemoryTool20250818 | ComputerToolset20260801 | ToolTextEditor20250124 | ToolTextEditor20250429 | ToolTextEditor20250728 | WebSearchTool20250305 | WebFetchTool20250910 | WebSearchTool20260209 | WebFetchTool20260209 | WebFetchTool20260309 | WebSearchTool20260318 | WebFetchTool20260318 | ToolSearchToolBm25_20251119 | ToolSearchToolRegex20251119
+  ToolUseBlock
+    /** (undocumented) */
+    export interface ToolUseBlock
+    /** (undocumented) */
+    id: string
+    /** (undocumented) */
+    caller: DirectCaller | ServerToolCaller | ServerToolCaller20260120
+    /** (undocumented) */
+    input: unknown
+    /** (undocumented) */
+    name: string
+    /** (undocumented) */
+    type: 'tool_use'
+    /** For a toolset member tool_use, the toolset family. */
+    toolset_name?: string | null
+
+  ToolUseBlockParam
+    /** (undocumented) */
+    export interface ToolUseBlockParam
+    /** (undocumented) */
+    id: string
+    /** (undocumented) */
+    input: unknown
+    /** (undocumented) */
+    name: string
+    /** (undocumented) */
+    type: 'tool_use'
+    /** Create a cache control breakpoint at this content block. */
+    cache_control?: CacheControlEphemeral | null
+    /** (undocumented) */
+    caller?: DirectCaller | ServerToolCaller | ServerToolCaller20260120
+    /** For a toolset member tool_use, the toolset family this member belongs to. */
+    toolset_name?: string | null
+
+  /**
+   * Which party invoked the tool call: the model directly, or a server tool on its
+   * behalf.
+   */
+  export type ToolUseCaller = DirectCaller | ServerToolCaller | ServerToolCaller20260120
+  /** (undocumented) */
+  export type ToolsetToolUseBlock = BrowserToolUseBlock | ComputerToolUseBlock | ToolUseBlock
+  URLImageSource
+    /** (undocumented) */
+    export interface URLImageSource
+    /** (undocumented) */
+    type: 'url'
+    /** (undocumented) */
+    url: string
+
+  URLPDFSource
+    /** (undocumented) */
+    export interface URLPDFSource
+    /** (undocumented) */
+    type: 'url'
+    /** (undocumented) */
+    url: string
+
+  Usage
+    /** (undocumented) */
+    export interface Usage
+    /** Breakdown of cached tokens by TTL */
+    cache_creation: CacheCreation | null
+    /** The number of input tokens used to create the cache entry. */
+    cache_creation_input_tokens: number | null
+    /** The number of input tokens read from the cache. */
+    cache_read_input_tokens: number | null
+    /** The geographic region where inference was performed for this request. */
+    inference_geo: string | null
+    /** The number of input tokens which were used. */
+    input_tokens: number
+    /** The number of output tokens which were used. */
+    output_tokens: number
+    /**
+     * Breakdown of output tokens by category.
+     *
+     * `output_tokens` remains the inclusive, authoritative total used for billing.
+     * This object provides a read-only decomposition for observability — for example,
+     * how many of the billed output tokens were spent on internal reasoning that may
+     * have been summarized before being returned to you.
+     */
+    output_tokens_details: OutputTokensDetails | null
+    /** The number of server tool requests. */
+    server_tool_use: ServerToolUsage | null
+    /** If the request used the priority, standard, or batch tier. */
+    service_tier: 'standard' | 'priority' | 'batch' | null
+    /** The inference speed mode used for this request. */
+    speed: 'standard' | 'fast' | null
+
+  UserLocation
+    /** (undocumented) */
+    export interface UserLocation
+    /** (undocumented) */
+    type: 'approximate'
+    /** The city of the user. */
+    city?: string | null
+    /**
+     * The two letter
+     * [ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) of the
+     * user.
+     */
+    country?: string | null
+    /** The region of the user. */
+    region?: string | null
+    /** The [IANA timezone](https://nodatime.org/TimeZones) of the user. */
+    timezone?: string | null
+
+  UserMessageParam
+    /** (undocumented) */
+    export interface UserMessageParam
+    /** (undocumented) */
+    content: MessageContentParam
+    /** (undocumented) */
+    role: 'user'
+
+  /** (undocumented) */
+  export type MessageStreamEvent = RawMessageStreamEvent
+  /** (undocumented) */
+  export type MessageStartEvent = RawMessageStartEvent
+  /** (undocumented) */
+  export type MessageDeltaEvent = RawMessageDeltaEvent
+  /** (undocumented) */
+  export type MessageStopEvent = RawMessageStopEvent
+  /** (undocumented) */
+  export type ContentBlockStartEvent = RawContentBlockStartEvent
+  /** (undocumented) */
+  export type ContentBlockDeltaEvent = RawContentBlockDeltaEvent
+  /** (undocumented) */
+  export type ContentBlockStopEvent = RawContentBlockStopEvent
+  /** (undocumented) */
+  export type MessageCreateParams = MessageCreateParamsNonStreaming | MessageCreateParamsStreaming
+  MessageCreateParamsBase
+    /** (undocumented) */
+    export interface MessageCreateParamsBase
+    /**
+     * Body param: The maximum number of tokens to generate before stopping.
+     *
+     * Note that our models may stop _before_ reaching this maximum. This parameter
+     * only specifies the absolute maximum number of tokens to generate.
+     *
+     * Set to `0` to populate the
+     * [prompt cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pre-warming-the-cache)
+     * without generating a response.
+     *
+     * Different models have different maximum values for this parameter. See
+     * [models](https://platform.claude.com/docs/en/about-claude/models/overview) for
+     * details.
+     */
+    max_tokens: number
+    /**
+     * Body param: Input messages.
+     *
+     * Our models are trained to operate on alternating `user` and `assistant`
+     * conversational turns. When creating a new `Message`, you specify the prior
+     * conversational turns with the `messages` parameter, and the model then generates
+     * the next `Message` in the conversation. Consecutive `user` or `assistant` turns
+     * in your request will be combined into a single turn.
+     *
+     * Each input message must be an object with a `role` and `content`. You can
+     * specify a single `user`-role message, or you can include multiple `user` and
+     * `assistant` messages.
+     *
+     * If the final message uses the `assistant` role, the response content will
+     * continue immediately from the content in that message. This can be used to
+     * constrain part of the model's response. This is called prefill. On models that
+     * don't support prefill, creating a message that ends with a partial `assistant`
+     * response returns a 400 error. See
+     * [Prefill not supported](https://platform.claude.com/docs/en/api/errors#prefill-not-supported).
+     *
+     * Example with a single `user` message:
+     *
+     * [{ "role": "user", "content": "Hello, Claude" }]
+     *
+     * Example with multiple conversational turns:
+     *
+     * [
+     *   { "role": "user", "content": "Hello there." },
+     *   { "role": "assistant", "content": "Hi, I'm Claude. How can I help you?" },
+     *   { "role": "user", "content": "Can you explain LLMs in plain English?" }
+     * ]
+     *
+     * Example with a partially-filled response from Claude, for models that support
+     * prefill:
+     *
+     * [
+     *   {
+     *     "role": "user",
+     *     "content": "What's the Greek name for Sun? (A) Sol (B) Helios (C) Sun"
+     *   },
+     *   { "role": "assistant", "content": "The best answer is (" }
+     * ]
+     *
+     * Each input message `content` may be either a single `string` or an array of
+     * content blocks, where each block has a specific `type`. Using a `string` for
+     * `content` is shorthand for an array of one content block of type `"text"`. The
+     * following input messages are equivalent:
+     *
+     * { "role": "user", "content": "Hello, Claude" }
+     *
+     * { "role": "user", "content": [{ "type": "text", "text": "Hello, Claude" }] }
+     *
+     * See
+     * [input examples](https://platform.claude.com/docs/en/build-with-claude/working-with-messages).
+     *
+     * Note that if you want to include a
+     * [system prompt](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role),
+     * you can use the top-level `system` parameter.
+     *
+     * There is a limit of 100,000 messages in a single request.
+     */
+    messages: Array<MessageParam>
+    /**
+     * Body param: The model that will complete your prompt.
+     *
+     * See [models](https://docs.anthropic.com/en/docs/models-overview) for additional
+     * details and options.
+     */
+    model: Model
+    /**
+     * Body param: Top-level cache control automatically applies a cache_control marker
+     * to the last cacheable block in the request.
+     */
+    cache_control?: CacheControlEphemeral | null
+    /** Body param: Container identifier for reuse across requests. */
+    container?: MessageCreateParamsContainer | null
+    /**
+     * Body param: Request-level diagnostics. Supply `previous_message_id` to have the
+     * response include `diagnostics.cache_miss_reason` explaining any prompt-cache
+     * divergence from that prior request.
+     */
+    diagnostics?: DiagnosticsParam | null
+    /**
+     * Body param: Specifies the geographic region for inference processing. If not
+     * specified, the workspace's `default_inference_geo` is used.
+     */
+    inference_geo?: string | null
+    /** Body param: An object describing metadata about the request. */
+    metadata?: Metadata
+    /**
+     * Body param: Configuration options for the model's output, such as the output
+     * format.
+     */
+    output_config?: OutputConfig
+    /**
+     * Body param: Determines whether to use priority capacity (if available) or
+     * standard capacity for this request.
+     *
+     * Anthropic offers different levels of service for your API requests. See
+     * [service-tiers](https://platform.claude.com/docs/en/api/service-tiers) for
+     * details.
+     */
+    service_tier?: 'auto' | 'standard_only'
+    /**
+     * Body param: The inference speed mode for this request. `"fast"` enables high
+     * output-tokens-per-second inference.
+     *
+     * Some models require the `fast-mode-2026-02-01` beta header for any `speed`
+     * value. See
+     * [fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode) for
+     * which models.
+     */
+    speed?: 'standard' | 'fast' | null
+    /**
+     * Body param: Custom text sequences that will cause the model to stop generating.
+     *
+     * Our models will normally stop when they have naturally completed their turn,
+     * which will result in a response `stop_reason` of `"end_turn"`.
+     *
+     * If you want the model to stop generating when it encounters custom strings of
+     * text, you can use the `stop_sequences` parameter. If the model encounters one of
+     * the custom sequences, the response `stop_reason` value will be `"stop_sequence"`
+     * and the response `stop_sequence` value will contain the matched stop sequence.
+     */
+    stop_sequences?: Array<string>
+    /**
+     * Body param: Whether to incrementally stream the response using server-sent
+     * events. When `true`, SDKs return a raw event stream.
+     *
+     * In the TypeScript, Python and Ruby SDKs, the recommended way to stream is
+     * `messages.stream()`. It sets `stream` for you and accumulates the events into
+     * the final message. See
+     * [Streaming with SDKs](https://platform.claude.com/docs/en/build-with-claude/streaming#streaming-with-sdks)
+     * for an example in each language.
+     */
+    stream?: boolean
+    /**
+     * Body param: System prompt.
+     *
+     * A system prompt is a way of providing context and instructions to Claude, such
+     * as specifying a particular goal or role. See our
+     * [guide to system prompts](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role).
+     */
+    system?: string | Array<TextBlockParam>
+    /**
+     * Body param: Configuration for Claude's thinking.
+     *
+     * With `{"type": "adaptive"}`, Claude decides when and how much to think. With
+     * `{"type": "enabled"}` (manual extended thinking), you set a `budget_tokens` of
+     * at least 1,024. Thinking tokens count toward your `max_tokens` limit.
+     *
+     * Which `type` values are accepted, and what happens when you omit `thinking`,
+     * depend on the model. See
+     * [thinking](https://platform.claude.com/docs/en/build-with-claude/thinking#configuring-thinking)
+     * for each model's behavior.
+     */
+    thinking?: ThinkingConfigParam
+    /**
+     * Body param: How the model should use the provided tools. The model can use a
+     * specific tool, any available tool, decide by itself, or not use tools at all.
+     */
+    tool_choice?: ToolChoice
+    /**
+     * Body param: Definitions of tools that the model may use.
+     *
+     * If you include `tools` in your API request, the model may return `tool_use`
+     * content blocks that represent the model's use of those tools. You can then run
+     * those tools using the tool input generated by the model and then optionally
+     * return results back to the model using `tool_result` content blocks.
+     *
+     * There are two types of tools: **client tools** and **server tools**. The
+     * behavior described below applies to client tools. For
+     * [server tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/server-tools),
+     * see their individual documentation as each has its own behavior (e.g., the
+     * [web search tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool)).
+     *
+     * Each tool definition includes:
+     *
+     * - `name`: Name of the tool.
+     * - `description`: Optional, but strongly-recommended description of the tool.
+     * - `input_schema`: [JSON schema](https://json-schema.org/draft/2020-12) for the
+     *   tool `input` shape that the model will produce in `tool_use` output content
+     *   blocks.
+     *
+     * For example, if you defined `tools` as:
+     *
+     * [
+     *   {
+     *     "name": "get_stock_price",
+     *     "description": "Get the current stock price for a given ticker symbol.",
+     *     "input_schema": {
+     *       "type": "object",
+     *       "properties": {
+     *         "ticker": {
+     *           "type": "string",
+     *           "description": "The stock ticker symbol, e.g. AAPL for Apple Inc."
+     *         }
+     *       },
+     *       "required": ["ticker"]
+     *     }
+     *   }
+     * ]
+     *
+     * And then asked the model "What's the S&P 500 at today?", the model might produce
+     * `tool_use` content blocks in the response like this:
+     *
+     * [
+     *   {
+     *     "type": "tool_use",
+     *     "id": "toolu_01D7FLrfh4GYq7yT1ULFeyMV",
+     *     "name": "get_stock_price",
+     *     "input": { "ticker": "^GSPC" }
+     *   }
+     * ]
+     *
+     * You might then run your `get_stock_price` tool with `{"ticker": "^GSPC"}` as an
+     * input, and return the following back to the model in a subsequent `user`
+     * message:
+     *
+     * [
+     *   {
+     *     "type": "tool_result",
+     *     "tool_use_id": "toolu_01D7FLrfh4GYq7yT1ULFeyMV",
+     *     "content": "259.75 USD"
+     *   }
+     * ]
+     *
+     * Tools can be used for workflows that include running client-side tools and
+     * functions, or more generally whenever you want the model to produce a particular
+     * JSON structure of output.
+     *
+     * See our
+     * [guide](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+     * for more details.
+     */
+    tools?: Array<ToolUnion>
+    /**
+     * Header param: The user profile ID to attribute this request to. Use when acting
+     * on behalf of a party other than your organization.
+     */
+    user_profile_id?: string
+    /**
+     * Header param: Optional header to select the Workspace for this request. The
+     * value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
+     *
+     * Only needed for credentials that can act on more than one Workspace. A
+     * credential that belongs to a specific Workspace may omit it; if sent, it must
+     * match that Workspace.
+     */
+    workspace_id?: string
+
+  MessageCreateParams/
+    /** (undocumented) */
+    /** (undocumented) */
+    type MessageCreateParamsNonStreaming = MessagesAPI.MessageCreateParamsNonStreaming
+    /** (undocumented) */
+    type MessageCreateParamsStreaming = MessagesAPI.MessageCreateParamsStreaming
+
+  MessageCreateParamsNonStreaming
+    /** (undocumented) */
+    export interface MessageCreateParamsNonStreaming extends MessageCreateParamsBase
+    /**
+     * Body param: Whether to incrementally stream the response using server-sent
+     * events. When `true`, SDKs return a raw event stream.
+     *
+     * In the TypeScript, Python and Ruby SDKs, the recommended way to stream is
+     * `messages.stream()`. It sets `stream` for you and accumulates the events into
+     * the final message. See
+     * [Streaming with SDKs](https://platform.claude.com/docs/en/build-with-claude/streaming#streaming-with-sdks)
+     * for an example in each language.
+     */
+    stream?: false
+
+  MessageCreateParamsStreaming
+    /** (undocumented) */
+    export interface MessageCreateParamsStreaming extends MessageCreateParamsBase
+    /**
+     * Body param: Whether to incrementally stream the response using server-sent
+     * events. When `true`, SDKs return a raw event stream.
+     *
+     * In the TypeScript, Python and Ruby SDKs, the recommended way to stream is
+     * `messages.stream()`. It sets `stream` for you and accumulates the events into
+     * the final message. See
+     * [Streaming with SDKs](https://platform.claude.com/docs/en/build-with-claude/streaming#streaming-with-sdks)
+     * for an example in each language.
+     */
+    stream: true
+
+  /** (undocumented) */
+  export type MessageStreamParams = ParseableMessageCreateParams
+  MessageCountTokensParams
+    /** (undocumented) */
+    export interface MessageCountTokensParams
+    /**
+     * Body param: Input messages.
+     *
+     * Our models are trained to operate on alternating `user` and `assistant`
+     * conversational turns. When creating a new `Message`, you specify the prior
+     * conversational turns with the `messages` parameter, and the model then generates
+     * the next `Message` in the conversation. Consecutive `user` or `assistant` turns
+     * in your request will be combined into a single turn.
+     *
+     * Each input message must be an object with a `role` and `content`. You can
+     * specify a single `user`-role message, or you can include multiple `user` and
+     * `assistant` messages.
+     *
+     * If the final message uses the `assistant` role, the response content will
+     * continue immediately from the content in that message. This can be used to
+     * constrain part of the model's response. This is called prefill. On models that
+     * don't support prefill, creating a message that ends with a partial `assistant`
+     * response returns a 400 error. See
+     * [Prefill not supported](https://platform.claude.com/docs/en/api/errors#prefill-not-supported).
+     *
+     * Example with a single `user` message:
+     *
+     * [{ "role": "user", "content": "Hello, Claude" }]
+     *
+     * Example with multiple conversational turns:
+     *
+     * [
+     *   { "role": "user", "content": "Hello there." },
+     *   { "role": "assistant", "content": "Hi, I'm Claude. How can I help you?" },
+     *   { "role": "user", "content": "Can you explain LLMs in plain English?" }
+     * ]
+     *
+     * Example with a partially-filled response from Claude, for models that support
+     * prefill:
+     *
+     * [
+     *   {
+     *     "role": "user",
+     *     "content": "What's the Greek name for Sun? (A) Sol (B) Helios (C) Sun"
+     *   },
+     *   { "role": "assistant", "content": "The best answer is (" }
+     * ]
+     *
+     * Each input message `content` may be either a single `string` or an array of
+     * content blocks, where each block has a specific `type`. Using a `string` for
+     * `content` is shorthand for an array of one content block of type `"text"`. The
+     * following input messages are equivalent:
+     *
+     * { "role": "user", "content": "Hello, Claude" }
+     *
+     * { "role": "user", "content": [{ "type": "text", "text": "Hello, Claude" }] }
+     *
+     * See
+     * [input examples](https://platform.claude.com/docs/en/build-with-claude/working-with-messages).
+     *
+     * Note that if you want to include a
+     * [system prompt](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role),
+     * you can use the top-level `system` parameter.
+     *
+     * There is a limit of 100,000 messages in a single request.
+     */
+    messages: Array<MessageParam>
+    /**
+     * Body param: The model that will complete your prompt.
+     *
+     * See [models](https://docs.anthropic.com/en/docs/models-overview) for additional
+     * details and options.
+     */
+    model: Model
+    /**
+     * Body param: Top-level cache control automatically applies a cache_control marker
+     * to the last cacheable block in the request.
+     */
+    cache_control?: CacheControlEphemeral | null
+    /**
+     * Body param: Configuration options for the model's output, such as the output
+     * format.
+     */
+    output_config?: OutputConfig
+    /**
+     * Body param: The inference speed mode for this request. `"fast"` enables high
+     * output-tokens-per-second inference.
+     *
+     * Some models require the `fast-mode-2026-02-01` beta header for any `speed`
+     * value. See
+     * [fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode) for
+     * which models.
+     */
+    speed?: 'standard' | 'fast' | null
+    /**
+     * Body param: System prompt.
+     *
+     * A system prompt is a way of providing context and instructions to Claude, such
+     * as specifying a particular goal or role. See our
+     * [guide to system prompts](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role).
+     */
+    system?: string | Array<TextBlockParam>
+    /**
+     * Body param: Configuration for Claude's thinking.
+     *
+     * With `{"type": "adaptive"}`, Claude decides when and how much to think. With
+     * `{"type": "enabled"}` (manual extended thinking), you set a `budget_tokens` of
+     * at least 1,024. Thinking tokens count toward your `max_tokens` limit.
+     *
+     * Which `type` values are accepted, and what happens when you omit `thinking`,
+     * depend on the model. See
+     * [thinking](https://platform.claude.com/docs/en/build-with-claude/thinking#configuring-thinking)
+     * for each model's behavior.
+     */
+    thinking?: ThinkingConfigParam
+    /**
+     * Body param: How the model should use the provided tools. The model can use a
+     * specific tool, any available tool, decide by itself, or not use tools at all.
+     */
+    tool_choice?: ToolChoice
+    /**
+     * Body param: Definitions of tools that the model may use.
+     *
+     * If you include `tools` in your API request, the model may return `tool_use`
+     * content blocks that represent the model's use of those tools. You can then run
+     * those tools using the tool input generated by the model and then optionally
+     * return results back to the model using `tool_result` content blocks.
+     *
+     * There are two types of tools: **client tools** and **server tools**. The
+     * behavior described below applies to client tools. For
+     * [server tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/server-tools),
+     * see their individual documentation as each has its own behavior (e.g., the
+     * [web search tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/web-search-tool)).
+     *
+     * Each tool definition includes:
+     *
+     * - `name`: Name of the tool.
+     * - `description`: Optional, but strongly-recommended description of the tool.
+     * - `input_schema`: [JSON schema](https://json-schema.org/draft/2020-12) for the
+     *   tool `input` shape that the model will produce in `tool_use` output content
+     *   blocks.
+     *
+     * For example, if you defined `tools` as:
+     *
+     * [
+     *   {
+     *     "name": "get_stock_price",
+     *     "description": "Get the current stock price for a given ticker symbol.",
+     *     "input_schema": {
+     *       "type": "object",
+     *       "properties": {
+     *         "ticker": {
+     *           "type": "string",
+     *           "description": "The stock ticker symbol, e.g. AAPL for Apple Inc."
+     *         }
+     *       },
+     *       "required": ["ticker"]
+     *     }
+     *   }
+     * ]
+     *
+     * And then asked the model "What's the S&P 500 at today?", the model might produce
+     * `tool_use` content blocks in the response like this:
+     *
+     * [
+     *   {
+     *     "type": "tool_use",
+     *     "id": "toolu_01D7FLrfh4GYq7yT1ULFeyMV",
+     *     "name": "get_stock_price",
+     *     "input": { "ticker": "^GSPC" }
+     *   }
+     * ]
+     *
+     * You might then run your `get_stock_price` tool with `{"ticker": "^GSPC"}` as an
+     * input, and return the following back to the model in a subsequent `user`
+     * message:
+     *
+     * [
+     *   {
+     *     "type": "tool_result",
+     *     "tool_use_id": "toolu_01D7FLrfh4GYq7yT1ULFeyMV",
+     *     "content": "259.75 USD"
+     *   }
+     * ]
+     *
+     * Tools can be used for workflows that include running client-side tools and
+     * functions, or more generally whenever you want the model to produce a particular
+     * JSON structure of output.
+     *
+     * See our
+     * [guide](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+     * for more details.
+     */
+    tools?: Array<MessageCountTokensTool>
+    /**
+     * Header param: The user profile ID to attribute this request to. Use when acting
+     * on behalf of a party other than your organization.
+     */
+    user_profile_id?: string
+    /**
+     * Header param: Optional header to select the Workspace for this request. The
+     * value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
+     *
+     * Only needed for credentials that can act on more than one Workspace. A
+     * credential that belongs to a specific Workspace may omit it; if sent, it must
+     * match that Workspace.
+     */
+    workspace_id?: string
+
+  Messages/
+    /** (undocumented) */
+    export { type AssistantMessageParam as AssistantMessageParam, type Base64ImageSource as Base64ImageSource, type Base64PDFSource as Base64PDFSource, type BashCodeExecutionOutputBlock as BashCodeExecutionOutputBlock, type BashCodeExecutionOutputBlockParam as BashCodeExecutionOutputBlockParam, type BashCodeExecutionResultBlock as BashCodeExecutionResultBlock, type BashCodeExecutionResultBlockParam as BashCodeExecutionResultBlockParam, type BashCodeExecutionToolResultBlock as BashCodeExecutionToolResultBlock, type BashCodeExecutionToolResultBlockParam as BashCodeExecutionToolResultBlockParam, type BashCodeExecutionToolResultError as BashCodeExecutionToolResultError, type BashCodeExecutionToolResultErrorCode as BashCodeExecutionToolResultErrorCode, type BashCodeExecutionToolResultErrorParam as BashCodeExecutionToolResultErrorParam, type BrowserClickTarget as BrowserClickTarget, type BrowserCloseTabConfig as BrowserCloseTabConfig, type BrowserCloseTabInput as BrowserCloseTabInput, type BrowserCloseTabToolUseBlock as BrowserCloseTabToolUseBlock, type BrowserCoordinateTarget as BrowserCoordinateTarget, type BrowserDoubleClickConfig as BrowserDoubleClickConfig, type BrowserDoubleClickInput as BrowserDoubleClickInput, type BrowserDoubleClickToolUseBlock as BrowserDoubleClickToolUseBlock, type BrowserFileUploadConfig as BrowserFileUploadConfig, type BrowserFileUploadInput as BrowserFileUploadInput, type BrowserFileUploadToolUseBlock as BrowserFileUploadToolUseBlock, type BrowserFindConfig as BrowserFindConfig, type BrowserFindInput as BrowserFindInput, type BrowserFindToolUseBlock as BrowserFindToolUseBlock, type BrowserFormInputConfig as BrowserFormInputConfig, type BrowserFormInputInput as BrowserFormInputInput, type BrowserFormInputToolUseBlock as BrowserFormInputToolUseBlock, type BrowserFormInputValue as BrowserFormInputValue, type BrowserGetPageTextConfig as BrowserGetPageTextConfig, type BrowserGetPageTextInput as BrowserGetPageTextInput, type BrowserGetPageTextToolUseBlock as BrowserGetPageTextToolUseBlock, type BrowserHoldKeyConfig as BrowserHoldKeyConfig, type BrowserHoldKeyInput as BrowserHoldKeyInput, type BrowserHoldKeyToolUseBlock as BrowserHoldKeyToolUseBlock, type BrowserHoverConfig as BrowserHoverConfig, type BrowserHoverInput as BrowserHoverInput, type BrowserHoverToolUseBlock as BrowserHoverToolUseBlock, type BrowserJavascriptExecConfig as BrowserJavascriptExecConfig, type BrowserJavascriptExecInput as BrowserJavascriptExecInput, type BrowserJavascriptExecToolUseBlock as BrowserJavascriptExecToolUseBlock, type BrowserKeyConfig as BrowserKeyConfig, type BrowserKeyInput as BrowserKeyInput, type BrowserKeyToolUseBlock as BrowserKeyToolUseBlock, type BrowserLeftClickConfig as BrowserLeftClickConfig, type BrowserLeftClickDragConfig as BrowserLeftClickDragConfig, type BrowserLeftClickDragInput as BrowserLeftClickDragInput, type BrowserLeftClickDragToolUseBlock as BrowserLeftClickDragToolUseBlock, type BrowserLeftClickInput as BrowserLeftClickInput, type BrowserLeftClickToolUseBlock as BrowserLeftClickToolUseBlock, type BrowserLeftMouseDownConfig as BrowserLeftMouseDownConfig, type BrowserLeftMouseDownInput as BrowserLeftMouseDownInput, type BrowserLeftMouseDownToolUseBlock as BrowserLeftMouseDownToolUseBlock, type BrowserLeftMouseUpConfig as BrowserLeftMouseUpConfig, type BrowserLeftMouseUpInput as BrowserLeftMouseUpInput, type BrowserLeftMouseUpToolUseBlock as BrowserLeftMouseUpToolUseBlock, type BrowserListTabsConfig as BrowserListTabsConfig, type BrowserListTabsInput as BrowserListTabsInput, type BrowserListTabsToolUseBlock as BrowserListTabsToolUseBlock, type BrowserMemberInput as BrowserMemberInput, type BrowserMemberName as BrowserMemberName, type BrowserMiddleClickConfig as BrowserMiddleClickConfig, type BrowserMiddleClickInput as BrowserMiddleClickInput, type BrowserMiddleClickToolUseBlock as BrowserMiddleClickToolUseBlock, type BrowserMouseMoveConfig as BrowserMouseMoveConfig, type BrowserMouseMoveInput as BrowserMouseMoveInput, type BrowserMouseMoveToolUseBlock as BrowserMouseMoveToolUseBlock, type BrowserNavigateConfig as BrowserNavigateConfig, type BrowserNavigateInput as BrowserNavigateInput, type BrowserNavigateToolUseBlock as BrowserNavigateToolUseBlock, type BrowserNewTabConfig as BrowserNewTabConfig, type BrowserNewTabInput as BrowserNewTabInput, type BrowserNewTabToolUseBlock as BrowserNewTabToolUseBlock, type BrowserReadConsoleConfig as BrowserReadConsoleConfig, type BrowserReadConsoleInput as BrowserReadConsoleInput, type BrowserReadConsoleToolUseBlock as BrowserReadConsoleToolUseBlock, type BrowserReadNetworkConfig as BrowserReadNetworkConfig, type BrowserReadNetworkInput as BrowserReadNetworkInput, type BrowserReadNetworkToolUseBlock as BrowserReadNetworkToolUseBlock, type BrowserReadPageConfig as BrowserReadPageConfig, type BrowserReadPageFilter as BrowserReadPageFilter, type BrowserReadPageInput as BrowserReadPageInput, type BrowserReadPageToolUseBlock as BrowserReadPageToolUseBlock, type BrowserRefTarget as BrowserRefTarget, type BrowserRightClickConfig as BrowserRightClickConfig, type BrowserRightClickInput as BrowserRightClickInput, type BrowserRightClickToolUseBlock as BrowserRightClickToolUseBlock, type BrowserScreenshotConfig as BrowserScreenshotConfig, type BrowserScreenshotInput as BrowserScreenshotInput, type BrowserScreenshotToolUseBlock as BrowserScreenshotToolUseBlock, type BrowserScrollConfig as BrowserScrollConfig, type BrowserScrollDirection as BrowserScrollDirection, type BrowserScrollInput as BrowserScrollInput, type BrowserScrollToConfig as BrowserScrollToConfig, type BrowserScrollToInput as BrowserScrollToInput, type BrowserScrollToToolUseBlock as BrowserScrollToToolUseBlock, type BrowserScrollToolUseBlock as BrowserScrollToolUseBlock, type BrowserStateBlockParam as BrowserStateBlockParam, type BrowserStateChange as BrowserStateChange, type BrowserStateChangeDownloadCompleted as BrowserStateChangeDownloadCompleted, type BrowserStateChangeDownloadFailed as BrowserStateChangeDownloadFailed, type BrowserStateChangeDownloadStarted as BrowserStateChangeDownloadStarted, type BrowserStateChangeTabOpened as BrowserStateChangeTabOpened, type BrowserStateTabEntry as BrowserStateTabEntry, type BrowserSwitchTabConfig as BrowserSwitchTabConfig, type BrowserSwitchTabInput as BrowserSwitchTabInput, type BrowserSwitchTabToolUseBlock as BrowserSwitchTabToolUseBlock, type BrowserToolUseBlock as BrowserToolUseBlock, type BrowserToolset20260801 as BrowserToolset20260801, type BrowserToolsetConfigs as BrowserToolsetConfigs, type BrowserTripleClickConfig as BrowserTripleClickConfig, type BrowserTripleClickInput as BrowserTripleClickInput, type BrowserTripleClickToolUseBlock as BrowserTripleClickToolUseBlock, type BrowserTypeConfig as BrowserTypeConfig, type BrowserTypeInput as BrowserTypeInput, type BrowserTypeToolUseBlock as BrowserTypeToolUseBlock, type BrowserWaitConfig as BrowserWaitConfig, type BrowserWaitInput as BrowserWaitInput, type BrowserWaitToolUseBlock as BrowserWaitToolUseBlock, type BrowserZoomConfig as BrowserZoomConfig, type BrowserZoomInput as BrowserZoomInput, type BrowserZoomToolUseBlock as BrowserZoomToolUseBlock, type CacheControlEphemeral as CacheControlEphemeral, type CacheCreation as CacheCreation, type CacheMissMessagesChanged as CacheMissMessagesChanged, type CacheMissModelChanged as CacheMissModelChanged, type CacheMissPreviousMessageNotFound as CacheMissPreviousMessageNotFound, type CacheMissReason as CacheMissReason, type CacheMissSystemChanged as CacheMissSystemChanged, type CacheMissToolsChanged as CacheMissToolsChanged, type CacheMissUnavailable as CacheMissUnavailable, type CitationCharLocation as CitationCharLocation, type CitationCharLocationParam as CitationCharLocationParam, type CitationContentBlockLocation as CitationContentBlockLocation, type CitationContentBlockLocationParam as CitationContentBlockLocationParam, type CitationPageLocation as CitationPageLocation, type CitationPageLocationParam as CitationPageLocationParam, type CitationSearchResultLocationParam as CitationSearchResultLocationParam, type CitationWebSearchResultLocationParam as CitationWebSearchResultLocationParam, type CitationsConfig as CitationsConfig, type CitationsConfigParam as CitationsConfigParam, type CitationsDelta as CitationsDelta, type CitationsSearchResultLocation as CitationsSearchResultLocation, type CitationsWebSearchResultLocation as CitationsWebSearchResultLocation, type ClientToolUnion as ClientToolUnion, type CodeExecutionOutputBlock as CodeExecutionOutputBlock, type CodeExecutionOutputBlockParam as CodeExecutionOutputBlockParam, type CodeExecutionResultBlock as CodeExecutionResultBlock, type CodeExecutionResultBlockParam as CodeExecutionResultBlockParam, type CodeExecutionTool20250522 as CodeExecutionTool20250522, type CodeExecutionTool20250825 as CodeExecutionTool20250825, type CodeExecutionTool20260120 as CodeExecutionTool20260120, type CodeExecutionTool20260521 as CodeExecutionTool20260521, type CodeExecutionToolResultBlock as CodeExecutionToolResultBlock, type CodeExecutionToolResultBlockContent as CodeExecutionToolResultBlockContent, type CodeExecutionToolResultBlockParam as CodeExecutionToolResultBlockParam, type CodeExecutionToolResultBlockParamContent as CodeExecutionToolResultBlockParamContent, type CodeExecutionToolResultError as CodeExecutionToolResultError, type CodeExecutionToolResultErrorCode as CodeExecutionToolResultErrorCode, type CodeExecutionToolResultErrorParam as CodeExecutionToolResultErrorParam, type ComputerCursorPositionConfig as ComputerCursorPositionConfig, type ComputerCursorPositionInput as ComputerCursorPositionInput, type ComputerCursorPositionToolUseBlock as ComputerCursorPositionToolUseBlock, type ComputerDoubleClickConfig as ComputerDoubleClickConfig, type ComputerDoubleClickInput as ComputerDoubleClickInput, type ComputerDoubleClickToolUseBlock as ComputerDoubleClickToolUseBlock, type ComputerHoldKeyConfig as ComputerHoldKeyConfig, type ComputerHoldKeyInput as ComputerHoldKeyInput, type ComputerHoldKeyToolUseBlock as ComputerHoldKeyToolUseBlock, type ComputerKeyConfig as ComputerKeyConfig, type ComputerKeyInput as ComputerKeyInput, type ComputerKeyToolUseBlock as ComputerKeyToolUseBlock, type ComputerLeftClickConfig as ComputerLeftClickConfig, type ComputerLeftClickDragConfig as ComputerLeftClickDragConfig, type ComputerLeftClickDragInput as ComputerLeftClickDragInput, type ComputerLeftClickDragToolUseBlock as ComputerLeftClickDragToolUseBlock, type ComputerLeftClickInput as ComputerLeftClickInput, type ComputerLeftClickToolUseBlock as ComputerLeftClickToolUseBlock, type ComputerLeftMouseDownConfig as ComputerLeftMouseDownConfig, type ComputerLeftMouseDownInput as ComputerLeftMouseDownInput, type ComputerLeftMouseDownToolUseBlock as ComputerLeftMouseDownToolUseBlock, type ComputerLeftMouseUpConfig as ComputerLeftMouseUpConfig, type ComputerLeftMouseUpInput as ComputerLeftMouseUpInput, type ComputerLeftMouseUpToolUseBlock as ComputerLeftMouseUpToolUseBlock, type ComputerMemberInput as ComputerMemberInput, type ComputerMemberName as ComputerMemberName, type ComputerMiddleClickConfig as ComputerMiddleClickConfig, type ComputerMiddleClickInput as ComputerMiddleClickInput, type ComputerMiddleClickToolUseBlock as ComputerMiddleClickToolUseBlock, type ComputerMouseMoveConfig as ComputerMouseMoveConfig, type ComputerMouseMoveInput as ComputerMouseMoveInput, type ComputerMouseMoveToolUseBlock as ComputerMouseMoveToolUseBlock, type ComputerRightClickConfig as ComputerRightClickConfig, type ComputerRightClickInput as ComputerRightClickInput, type ComputerRightClickToolUseBlock as ComputerRightClickToolUseBlock, type ComputerScreenshotConfig as ComputerScreenshotConfig, type ComputerScreenshotInput as ComputerScreenshotInput, type ComputerScreenshotToolUseBlock as ComputerScreenshotToolUseBlock, type ComputerScrollConfig as ComputerScrollConfig, type ComputerScrollDirection as ComputerScrollDirection, type ComputerScrollInput as ComputerScrollInput, type ComputerScrollToolUseBlock as ComputerScrollToolUseBlock, type ComputerToolUseBlock as ComputerToolUseBlock, type ComputerToolset20260801 as ComputerToolset20260801, type ComputerToolsetConfigs as ComputerToolsetConfigs, type ComputerTripleClickConfig as ComputerTripleClickConfig, type ComputerTripleClickInput as ComputerTripleClickInput, type ComputerTripleClickToolUseBlock as ComputerTripleClickToolUseBlock, type ComputerTypeConfig as ComputerTypeConfig, type ComputerTypeInput as ComputerTypeInput, type ComputerTypeToolUseBlock as ComputerTypeToolUseBlock, type ComputerWaitConfig as ComputerWaitConfig, type ComputerWaitInput as ComputerWaitInput, type ComputerWaitToolUseBlock as ComputerWaitToolUseBlock, type ComputerZoomConfig as ComputerZoomConfig, type ComputerZoomInput as ComputerZoomInput, type ComputerZoomToolUseBlock as ComputerZoomToolUseBlock, type Container as Container, type ContainerParams as ContainerParams, type ContainerSkill as ContainerSkill, type ContainerUploadBlock as ContainerUploadBlock, type ContainerUploadBlockParam as ContainerUploadBlockParam, type ContentBlock as ContentBlock, type ContentBlockParam as ContentBlockParam, type ContentBlockStartEvent as ContentBlockStartEvent, type ContentBlockStopEvent as ContentBlockStopEvent, type ContentBlockSource as ContentBlockSource, type ContentBlockSourceContent as ContentBlockSourceContent, type Diagnostics as Diagnostics, type DiagnosticsParam as DiagnosticsParam, type DirectCaller as DirectCaller, type DocumentBlock as DocumentBlock, type DocumentBlockParam as DocumentBlockParam, type EncryptedCodeExecutionResultBlock as EncryptedCodeExecutionResultBlock, type EncryptedCodeExecutionResultBlockParam as EncryptedCodeExecutionResultBlockParam, type FileDocumentSource as FileDocumentSource, type FileImageSource as FileImageSource, type ImageBlockParam as ImageBlockParam, type ImageTransformationsParam as ImageTransformationsParam, type InputJSONDelta as InputJSONDelta, type JSONOutputFormat as JSONOutputFormat, type MemoryTool20250818 as MemoryTool20250818, type Message as Message, type MessageContentParam as MessageContentParam, type MessageCountTokensTool as MessageCountTokensTool, type MessageCreateParamsContainer as MessageCreateParamsContainer, type MessageDeltaEvent as MessageDeltaEvent, type MessageDeltaUsage as MessageDeltaUsage, type MessageParam as MessageParam, type MessageTokensCount as MessageTokensCount, type Metadata as Metadata, type Model as Model, type OutputConfig as OutputConfig, type OutputTokensDetails as OutputTokensDetails, type PlainTextSource as PlainTextSource, type RawContentBlockDelta as RawContentBlockDelta, type RawContentBlockDeltaEvent as RawContentBlockDeltaEvent, type RawContentBlockStartEvent as RawContentBlockStartEvent, type RawContentBlockStopEvent as RawContentBlockStopEvent, type RawMessageDeltaEvent as RawMessageDeltaEvent, type RawMessageStartEvent as RawMessageStartEvent, type RawMessageStopEvent as RawMessageStopEvent, type RawMessageStreamEvent as RawMessageStreamEvent, type RedactedThinkingBlock as RedactedThinkingBlock, type RedactedThinkingBlockParam as RedactedThinkingBlockParam, type RefusalStopDetails as RefusalStopDetails, type SearchResultBlockParam as SearchResultBlockParam, type ServerToolCaller as ServerToolCaller, type ServerToolCaller20260120 as ServerToolCaller20260120, type ServerToolUsage as ServerToolUsage, type ServerToolUseBlock as ServerToolUseBlock, type ServerToolUseBlockParam as ServerToolUseBlockParam, type SignatureDelta as SignatureDelta, type SkillParams as SkillParams, type StopReason as StopReason, type SystemMessageParam as SystemMessageParam, type TextBlock as TextBlock, type TextBlockParam as TextBlockParam, type TextCitation as TextCitation, type TextCitationParam as TextCitationParam, type TextDelta as TextDelta, type TextEditorCodeExecutionCreateResultBlock as TextEditorCodeExecutionCreateResultBlock, type TextEditorCodeExecutionCreateResultBlockParam as TextEditorCodeExecutionCreateResultBlockParam, type TextEditorCodeExecutionStrReplaceResultBlock as TextEditorCodeExecutionStrReplaceResultBlock, type TextEditorCodeExecutionStrReplaceResultBlockParam as TextEditorCodeExecutionStrReplaceResultBlockParam, type TextEditorCodeExecutionToolResultBlock as TextEditorCodeExecutionToolResultBlock, type TextEditorCodeExecutionToolResultBlockParam as TextEditorCodeExecutionToolResultBlockParam, type TextEditorCodeExecutionToolResultError as TextEditorCodeExecutionToolResultError, type TextEditorCodeExecutionToolResultErrorCode as TextEditorCodeExecutionToolResultErrorCode, type TextEditorCodeExecutionToolResultErrorParam as TextEditorCodeExecutionToolResultErrorParam, type TextEditorCodeExecutionViewResultBlock as TextEditorCodeExecutionViewResultBlock, type TextEditorCodeExecutionViewResultBlockParam as TextEditorCodeExecutionViewResultBlockParam, type ThinkingBlock as ThinkingBlock, type ThinkingBlockParam as ThinkingBlockParam, type ThinkingConfigAdaptive as ThinkingConfigAdaptive, type ThinkingConfigBetweenTools as ThinkingConfigBetweenTools, type ThinkingConfigDisabled as ThinkingConfigDisabled, type ThinkingConfigEnabled as ThinkingConfigEnabled, type ThinkingConfigParam as ThinkingConfigParam, type ThinkingDelta as ThinkingDelta, type Tool as Tool, type ToolBash20250124 as ToolBash20250124, type ToolChoice as ToolChoice, type ToolChoiceAny as ToolChoiceAny, type ToolChoiceAuto as ToolChoiceAuto, type ToolChoiceNone as ToolChoiceNone, type ToolChoiceTool as ToolChoiceTool, type ToolReferenceBlock as ToolReferenceBlock, type ToolReferenceBlockParam as ToolReferenceBlockParam, type ToolResultBlockParam as ToolResultBlockParam, type ToolSearchToolBm25_20251119 as ToolSearchToolBm25_20251119, type ToolSearchToolRegex20251119 as ToolSearchToolRegex20251119, type ToolSearchToolResultBlock as ToolSearchToolResultBlock, type ToolSearchToolResultBlockParam as ToolSearchToolResultBlockParam, type ToolSearchToolResultError as ToolSearchToolResultError, type ToolSearchToolResultErrorCode as ToolSearchToolResultErrorCode, type ToolSearchToolResultErrorParam as ToolSearchToolResultErrorParam, type ToolSearchToolSearchResultBlock as ToolSearchToolSearchResultBlock, type ToolSearchToolSearchResultBlockParam as ToolSearchToolSearchResultBlockParam, type ToolTextEditor20250124 as ToolTextEditor20250124, type ToolTextEditor20250429 as ToolTextEditor20250429, type ToolTextEditor20250728 as ToolTextEditor20250728, type ToolUnion as ToolUnion, type ToolUseBlock as ToolUseBlock, type ToolUseBlockParam as ToolUseBlockParam, type ToolUseCaller as ToolUseCaller, type ToolsetToolUseBlock as ToolsetToolUseBlock, type URLImageSource as URLImageSource, type URLPDFSource as URLPDFSource, type Usage as Usage, type UserLocation as UserLocation, type UserMessageParam as UserMessageParam, type WebFetchBlock as WebFetchBlock, type WebFetchBlockParam as WebFetchBlockParam, type WebFetchTool20250910 as WebFetchTool20250910, type WebFetchTool20260209 as WebFetchTool20260209, type WebFetchTool20260309 as WebFetchTool20260309, type WebFetchTool20260318 as WebFetchTool20260318, type WebFetchToolResultBlock as WebFetchToolResultBlock, type WebFetchToolResultBlockParam as WebFetchToolResultBlockParam, type WebFetchToolResultErrorBlock as WebFetchToolResultErrorBlock, type WebFetchToolResultErrorBlockParam as WebFetchToolResultErrorBlockParam, type WebFetchToolResultErrorCode as WebFetchToolResultErrorCode, type WebFetchURLSourceAll as WebFetchURLSourceAll, type WebFetchURLSourceExcept as WebFetchURLSourceExcept, type WebFetchURLSourceNone as WebFetchURLSourceNone, type WebFetchURLSourceOnly as WebFetchURLSourceOnly, type WebFetchURLSourceToolReference as WebFetchURLSourceToolReference, type WebFetchURLSources as WebFetchURLSources, type WebSearchResultBlock as WebSearchResultBlock, type WebSearchResultBlockParam as WebSearchResultBlockParam, type WebSearchTool20250305 as WebSearchTool20250305, type WebSearchTool20260209 as WebSearchTool20260209, type WebSearchTool20260318 as WebSearchTool20260318, type WebSearchToolRequestError as WebSearchToolRequestError, type WebSearchToolResultBlock as WebSearchToolResultBlock, type WebSearchToolResultBlockContent as WebSearchToolResultBlockContent, type WebSearchToolResultBlockParam as WebSearchToolResultBlockParam, type WebSearchToolResultBlockParamContent as WebSearchToolResultBlockParamContent, type WebSearchToolResultError as WebSearchToolResultError, type ResponseToolUseBlockUnion as ResponseToolUseBlockUnion, type ResponseBrowserToolUseBlock as ResponseBrowserToolUseBlock, type ResponseBrowserCloseTabToolUseBlock as ResponseBrowserCloseTabToolUseBlock, type ResponseBrowserDoubleClickToolUseBlock as ResponseBrowserDoubleClickToolUseBlock, type ResponseBrowserFileUploadToolUseBlock as ResponseBrowserFileUploadToolUseBlock, type ResponseBrowserFindToolUseBlock as ResponseBrowserFindToolUseBlock, type ResponseBrowserFormInputToolUseBlock as ResponseBrowserFormInputToolUseBlock, type ResponseBrowserGetPageTextToolUseBlock as ResponseBrowserGetPageTextToolUseBlock, type ResponseBrowserHoldKeyToolUseBlock as ResponseBrowserHoldKeyToolUseBlock, type ResponseBrowserHoverToolUseBlock as ResponseBrowserHoverToolUseBlock, type ResponseBrowserJavascriptExecToolUseBlock as ResponseBrowserJavascriptExecToolUseBlock, type ResponseBrowserKeyToolUseBlock as ResponseBrowserKeyToolUseBlock, type ResponseBrowserLeftClickDragToolUseBlock as ResponseBrowserLeftClickDragToolUseBlock, type ResponseBrowserLeftClickToolUseBlock as ResponseBrowserLeftClickToolUseBlock, type ResponseBrowserLeftMouseDownToolUseBlock as ResponseBrowserLeftMouseDownToolUseBlock, type ResponseBrowserLeftMouseUpToolUseBlock as ResponseBrowserLeftMouseUpToolUseBlock, type ResponseBrowserListTabsToolUseBlock as ResponseBrowserListTabsToolUseBlock, type ResponseBrowserMiddleClickToolUseBlock as ResponseBrowserMiddleClickToolUseBlock, type ResponseBrowserMouseMoveToolUseBlock as ResponseBrowserMouseMoveToolUseBlock, type ResponseBrowserNavigateToolUseBlock as ResponseBrowserNavigateToolUseBlock, type ResponseBrowserNewTabToolUseBlock as ResponseBrowserNewTabToolUseBlock, type ResponseBrowserReadConsoleToolUseBlock as ResponseBrowserReadConsoleToolUseBlock, type ResponseBrowserReadNetworkToolUseBlock as ResponseBrowserReadNetworkToolUseBlock, type ResponseBrowserReadPageToolUseBlock as ResponseBrowserReadPageToolUseBlock, type ResponseBrowserRightClickToolUseBlock as ResponseBrowserRightClickToolUseBlock, type ResponseBrowserScreenshotToolUseBlock as ResponseBrowserScreenshotToolUseBlock, type ResponseBrowserScrollToToolUseBlock as ResponseBrowserScrollToToolUseBlock, type ResponseBrowserScrollToolUseBlock as ResponseBrowserScrollToolUseBlock, type ResponseBrowserSwitchTabToolUseBlock as ResponseBrowserSwitchTabToolUseBlock, type ResponseBrowserTripleClickToolUseBlock as ResponseBrowserTripleClickToolUseBlock, type ResponseBrowserTypeToolUseBlock as ResponseBrowserTypeToolUseBlock, type ResponseBrowserWaitToolUseBlock as ResponseBrowserWaitToolUseBlock, type ResponseBrowserZoomToolUseBlock as ResponseBrowserZoomToolUseBlock, type ResponseComputerToolUseBlock as ResponseComputerToolUseBlock, type ResponseComputerCursorPositionToolUseBlock as ResponseComputerCursorPositionToolUseBlock, type ResponseComputerDoubleClickToolUseBlock as ResponseComputerDoubleClickToolUseBlock, type ResponseComputerHoldKeyToolUseBlock as ResponseComputerHoldKeyToolUseBlock, type ResponseComputerKeyToolUseBlock as ResponseComputerKeyToolUseBlock, type ResponseComputerLeftClickDragToolUseBlock as ResponseComputerLeftClickDragToolUseBlock, type ResponseComputerLeftClickToolUseBlock as ResponseComputerLeftClickToolUseBlock, type ResponseComputerLeftMouseDownToolUseBlock as ResponseComputerLeftMouseDownToolUseBlock, type ResponseComputerLeftMouseUpToolUseBlock as ResponseComputerLeftMouseUpToolUseBlock, type ResponseComputerMiddleClickToolUseBlock as ResponseComputerMiddleClickToolUseBlock, type ResponseComputerMouseMoveToolUseBlock as ResponseComputerMouseMoveToolUseBlock, type ResponseComputerRightClickToolUseBlock as ResponseComputerRightClickToolUseBlock, type ResponseComputerScreenshotToolUseBlock as ResponseComputerScreenshotToolUseBlock, type ResponseComputerScrollToolUseBlock as ResponseComputerScrollToolUseBlock, type ResponseComputerTripleClickToolUseBlock as ResponseComputerTripleClickToolUseBlock, type ResponseComputerTypeToolUseBlock as ResponseComputerTypeToolUseBlock, type ResponseComputerWaitToolUseBlock as ResponseComputerWaitToolUseBlock, type ResponseComputerZoomToolUseBlock as ResponseComputerZoomToolUseBlock, type MessageStreamEvent as MessageStreamEvent, type MessageStartEvent as MessageStartEvent, type MessageStopEvent as MessageStopEvent, type ContentBlockDeltaEvent as ContentBlockDeltaEvent, type MessageCreateParams as MessageCreateParams, type MessageCreateParamsNonStreaming as MessageCreateParamsNonStreaming, type MessageCreateParamsStreaming as MessageCreateParamsStreaming, type MessageStreamParams as MessageStreamParams, type MessageCountTokensParams as MessageCountTokensParams, }
+    export { Batches as Batches, type DeletedMessageBatch as DeletedMessageBatch, type MessageBatch as MessageBatch, type MessageBatchCanceledResult as MessageBatchCanceledResult, type MessageBatchErroredResult as MessageBatchErroredResult, type MessageBatchExpiredResult as MessageBatchExpiredResult, type MessageBatchIndividualResponse as MessageBatchIndividualResponse, type MessageBatchRequestCounts as MessageBatchRequestCounts, type MessageBatchResult as MessageBatchResult, type MessageBatchSucceededResult as MessageBatchSucceededResult, type MessageBatchesPage as MessageBatchesPage, type BatchCreateParams as BatchCreateParams, type BatchRetrieveParams as BatchRetrieveParams, type BatchListParams as BatchListParams, type BatchDeleteParams as BatchDeleteParams, type BatchCancelParams as BatchCancelParams, type BatchResultsParams as BatchResultsParams, }
+

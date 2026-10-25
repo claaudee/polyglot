@@ -1,0 +1,995 @@
+# opentelemetry-logs api-logs 0.223.0, sdk-logs 3.0.0, exporter-logs-otlp-http 0.300.0, resources 3.0.0, pino-opentelemetry-transport 4.0.2, instrumentation-pino 0.70.0
+Source: https://registry.npmjs.org/@opentelemetry/api-logs/-/api-logs-0.223.0.tgz
+Source: https://registry.npmjs.org/@opentelemetry/sdk-logs/-/sdk-logs-3.0.0.tgz
+Source: https://registry.npmjs.org/@opentelemetry/exporter-logs-otlp-http/-/exporter-logs-otlp-http-0.300.0.tgz
+Source: https://registry.npmjs.org/@opentelemetry/resources/-/resources-3.0.0.tgz
+Source: https://registry.npmjs.org/pino-opentelemetry-transport/-/pino-opentelemetry-transport-4.0.2.tgz
+Source: https://registry.npmjs.org/@opentelemetry/instrumentation-pino/-/instrumentation-pino-0.70.0.tgz
+Collected: 2026-10-24
+Scope: logs signal only: api-logs (Logger, LogRecord, SeverityNumber, logs global), sdk-logs (LoggerProvider, processors, exporters; node platform), OTLP HTTP log exporter (node), resources (resourceFromAttributes, detectors), pino-opentelemetry-transport, instrumentation-pino. Excluded: browser platform, internal/, traces/metrics.
+Declarations: 95
+
+opentelemetry__api-logs/package/build/esm/index.d.ts/
+  export type { Logger } from './types/Logger'
+  export type { LoggerProvider } from './types/LoggerProvider'
+  export { SeverityNumber } from './types/LogRecord'
+  export type { LogAttributes, LogBody, LogRecord } from './types/LogRecord'
+  export type { LoggerOptions } from './types/LoggerOptions'
+  export type { AnyValue, AnyValueMap } from './types/AnyValue'
+  export { createNoopLogger } from './NoopLogger'
+  /** (undocumented) */
+  export declare const logs: LogsAPI
+
+opentelemetry__api-logs/package/build/esm/api/logs.d.ts/
+  LogsAPI
+    /** (undocumented) */
+    export declare class LogsAPI
+    /** (undocumented) */
+    static getInstance(): LogsAPI
+    /** (undocumented) */
+    setGlobalLoggerProvider(provider: LoggerProvider): LoggerProvider
+    /**
+     * Returns the global logger provider.
+     *
+     * @returns LoggerProvider
+     */
+    getLoggerProvider(): LoggerProvider
+    /**
+     * Returns a Logger, creating one if one with the given name, version,
+     * schemaUrl, and attributes is not already created.
+     *
+     * Getting a Logger may be expensive, especially when `attributes` are
+     * provided. Reuse Logger instances where possible instead of calling
+     * `getLogger()` on hot paths.
+     *
+     * @param name The name of the logger or instrumentation library.
+     * @param version The version of the logger or instrumentation library.
+     * @param options The options of the logger or instrumentation library.
+     * @returns {@link Logger}
+     */
+    getLogger(name: string, version?: string, options?: LoggerOptions): Logger
+    /** Remove the global logger provider */
+    disable(): void
+
+opentelemetry__api-logs/package/build/esm/types/AnyValue.d.ts/
+  /** (undocumented) */
+  export type AnyValueScalar = string | number | boolean
+  /** (undocumented) */
+  export type AnyValueArray = Array<AnyValue>
+  AnyValueMap
+    /** AnyValueMap is a map from string to AnyValue (attribute value or a nested map) */
+    export interface AnyValueMap
+    /** (undocumented) */
+    [attributeKey: string]: AnyValue
+
+  /**
+   * AnyValue can be one of the following:
+   * - a scalar value
+   * - a byte array
+   * - array of any value
+   * - map from string to any value
+   * - empty value
+   */
+  export type AnyValue = AnyValueScalar | Uint8Array | AnyValueArray | AnyValueMap | null | undefined
+
+opentelemetry__api-logs/package/build/esm/types/LogRecord.d.ts/
+  /** (undocumented) */
+  export type LogBody = AnyValue
+  /** (undocumented) */
+  export type LogAttributes = AnyValueMap
+  SeverityNumber
+    /** (undocumented) */
+    export declare enum SeverityNumber
+    /** (undocumented) */
+    UNSPECIFIED = 0
+    /** (undocumented) */
+    TRACE = 1
+    /** (undocumented) */
+    TRACE2 = 2
+    /** (undocumented) */
+    TRACE3 = 3
+    /** (undocumented) */
+    TRACE4 = 4
+    /** (undocumented) */
+    DEBUG = 5
+    /** (undocumented) */
+    DEBUG2 = 6
+    /** (undocumented) */
+    DEBUG3 = 7
+    /** (undocumented) */
+    DEBUG4 = 8
+    /** (undocumented) */
+    INFO = 9
+    /** (undocumented) */
+    INFO2 = 10
+    /** (undocumented) */
+    INFO3 = 11
+    /** (undocumented) */
+    INFO4 = 12
+    /** (undocumented) */
+    WARN = 13
+    /** (undocumented) */
+    WARN2 = 14
+    /** (undocumented) */
+    WARN3 = 15
+    /** (undocumented) */
+    WARN4 = 16
+    /** (undocumented) */
+    ERROR = 17
+    /** (undocumented) */
+    ERROR2 = 18
+    /** (undocumented) */
+    ERROR3 = 19
+    /** (undocumented) */
+    ERROR4 = 20
+    /** (undocumented) */
+    FATAL = 21
+    /** (undocumented) */
+    FATAL2 = 22
+    /** (undocumented) */
+    FATAL3 = 23
+    /** (undocumented) */
+    FATAL4 = 24
+
+  LogRecord
+    /** (undocumented) */
+    export interface LogRecord
+    /** The unique identifier for the log record. */
+    eventName?: string
+    /** The time when the log record occurred as UNIX Epoch time in nanoseconds. */
+    timestamp?: TimeInput
+    /** Time when the event was observed by the collection system. */
+    observedTimestamp?: TimeInput
+    /** Numerical value of the severity. */
+    severityNumber?: SeverityNumber
+    /** The severity text. */
+    severityText?: string
+    /** A value containing the body of the log record. */
+    body?: LogBody
+    /** Attributes that define the log record. */
+    attributes?: LogAttributes
+    /**
+     * An exception (or error) associated with the log record.
+     *
+     * @experimental
+     */
+    exception?: unknown
+    /** The Context associated with the LogRecord. */
+    context?: Context
+
+opentelemetry__api-logs/package/build/esm/types/Logger.d.ts/
+  Logger
+    /** (undocumented) */
+    export interface Logger
+    /**
+     * Emit a log record. This method should only be used by log appenders.
+     *
+     * @param logRecord
+     */
+    emit(logRecord: LogRecord): void
+    /**
+     * Will a log record with the given details get emitted?
+     * This can be used to avoid expensive calculation of log record data.
+     */
+    enabled(options?: { context?: Context; severityNumber?: SeverityNumber; eventName?: string; }): boolean
+
+opentelemetry__api-logs/package/build/esm/types/LoggerOptions.d.ts/
+  LoggerOptions
+    /** (undocumented) */
+    export interface LoggerOptions
+    /**
+     * The schemaUrl of the tracer or instrumentation library
+     * @default ''
+     */
+    schemaUrl?: string
+    /**
+     * The instrumentation scope attributes to associate with emitted telemetry.
+     * These attributes also participate in logger identity.
+     */
+    attributes?: LogAttributes
+
+opentelemetry__api-logs/package/build/esm/types/LoggerProvider.d.ts/
+  LoggerProvider
+    /** A registry for creating named {@link Logger}s. */
+    export interface LoggerProvider
+    /**
+     * Returns a Logger, creating one if one with the given name, version,
+     * schemaUrl, and attributes is not already created.
+     *
+     * Getting a Logger may be expensive, especially when `attributes` are
+     * provided. Reuse Logger instances where possible instead of calling
+     * `getLogger()` on hot paths.
+     *
+     * @param name The name of the logger or instrumentation library.
+     * @param version The version of the logger or instrumentation library.
+     * @param options The options of the logger or instrumentation library.
+     * @returns {@link Logger}
+     */
+    getLogger(name: string, version?: string, options?: LoggerOptions): Logger
+
+opentelemetry__sdk-logs/package/dist/LogRecordProcessor.d.mts/
+  LogRecordProcessor
+    /** (undocumented) */
+    interface LogRecordProcessor
+    /** Forces to export all finished log records */
+    forceFlush(options?: ForceFlushOptions): Promise<void>
+    /**
+     * Called when a {@link LogRecord} is emit
+     * @param logRecord the ReadWriteLogRecord that just emitted.
+     * @param context the current Context, or an empty Context if the Logger was obtained with include_trace_context=false
+     */
+    onEmit(logRecord: ReadWriteLogRecord, context?: Context): void
+    /**
+     * Shuts down the processor. Called when SDK is shut down. This is an
+     * opportunity for processor to do any cleanup required.
+     */
+    shutdown(): Promise<void>
+    /**
+     * Tells if the logger is enabled for the given context, severity number and event
+     * name if provided.
+     * @param options
+     */
+    enabled?(options: { context: Context; instrumentationScope: InstrumentationScope; severityNumber?: SeverityNumber; eventName?: string; }): boolean
+
+  export { LogRecordProcessor }
+
+opentelemetry__sdk-logs/package/dist/LoggerProvider.d.mts/
+  LoggerProvider$1
+    /** (undocumented) */
+    declare class LoggerProvider$1 implements LoggerProvider
+    /** (undocumented) */
+    constructor(config?: LoggerProviderOptions)
+    /** Get a logger with the configuration of the LoggerProvider. */
+    getLogger(name: string, version?: string, options?: LoggerOptions): Logger
+    /**
+     * Notifies all registered LogRecordProcessor to flush any buffered data.
+     *
+     * Returns a promise which is resolved when all flushes are complete.
+     */
+    forceFlush(options?: ForceFlushOptions): Promise<void>
+    /**
+     * Flush all buffered data and shut down the LoggerProvider and all registered
+     * LogRecordProcessor.
+     *
+     * Returns a promise which is resolved when all flushes are complete.
+     */
+    shutdown(): Promise<void>
+
+  export { LoggerProvider$1 as LoggerProvider }
+
+opentelemetry__sdk-logs/package/dist/config/LoggerConfigurators.d.mts/
+  LoggerPattern
+    /**
+     * Configuration for a specific logger pattern
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    interface LoggerPattern
+    /**
+     * The logger name or pattern to match.
+     * Use '*' for wildcard matching.
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    pattern: string
+    /**
+     * The configuration to apply to matching loggers.
+     * Partial config is allowed; unspecified properties will use defaults.
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    config: LoggerConfig
+
+  /**
+   * Creates a LoggerConfigurator from an array of logger patterns.
+   * Patterns are evaluated in order, and the first matching pattern's config is used.
+   * Supports exact matching and simple wildcard patterns with '*'.
+   *
+   * The returned configurator computes a complete LoggerConfig by merging the matched
+   * pattern's config with default values for any unspecified properties.
+   *
+   * @param patterns - Array of logger patterns with their configurations
+   * @returns A LoggerConfigurator function that computes complete LoggerConfig
+   * @experimental This feature is in development as per the OpenTelemetry specification.
+   *
+   * @example
+   * const configurator = createLoggerConfigurator([
+   *   { pattern: 'debug-logger', config: { minimumSeverity: SeverityNumber.DEBUG } },
+   *   { pattern: 'prod-*', config: { minimumSeverity: SeverityNumber.WARN } },
+   *   { pattern: '*', config: { minimumSeverity: SeverityNumber.INFO } },
+   * ]);
+   */
+  declare function createLoggerConfigurator(patterns: LoggerPattern[]): LoggerConfigurator
+  export { LoggerPattern, createLoggerConfigurator }
+
+opentelemetry__sdk-logs/package/dist/export/BatchLogRecordProcessorBase.d.mts/
+  BatchLogRecordProcessorBase
+    /** (undocumented) */
+    declare abstract class BatchLogRecordProcessorBase<T extends BatchLogRecordProcessorOptions> implements LogRecordProcessor
+    /** (undocumented) */
+    constructor(options: T)
+    /** (undocumented) */
+    onEmit(logRecord: ReadWriteLogRecord): void
+    /** (undocumented) */
+    forceFlush(): Promise<void>
+    /** (undocumented) */
+    shutdown(): Promise<void>
+
+  export { BatchLogRecordProcessorBase }
+
+opentelemetry__sdk-logs/package/dist/export/ConsoleLogRecordExporter.d.mts/
+  ConsoleLogRecordExporter
+    /**
+     * This is implementation of {@link LogRecordExporter} that prints LogRecords to the
+     * console. This class can be used for diagnostic purposes.
+     *
+     * NOTE: This {@link LogRecordExporter} is intended for diagnostics use only, output rendered to the console may change at any time.
+     */
+    declare class ConsoleLogRecordExporter implements LogRecordExporter
+    /**
+     * Export logs.
+     * @param logs
+     * @param resultCallback
+     */
+    export(logs: ReadableLogRecord[], resultCallback: (result: ExportResult) => void): void
+    /**
+     * ForceFlush the exporter.
+     * No-op for {@link ConsoleLogRecordExporter}
+     */
+    forceFlush(): Promise<void>
+    /** Shutdown the exporter. */
+    shutdown(): Promise<void>
+
+  export { ConsoleLogRecordExporter }
+
+opentelemetry__sdk-logs/package/dist/export/InMemoryLogRecordExporter.d.mts/
+  InMemoryLogRecordExporter
+    /**
+     * This class can be used for testing purposes. It stores the exported LogRecords
+     * in a list in memory that can be retrieved using the `getFinishedLogRecords()`
+     * method.
+     */
+    declare class InMemoryLogRecordExporter implements LogRecordExporter
+    /** (undocumented) */
+    export(logs: ReadableLogRecord[], resultCallback: (result: ExportResult) => void): void
+    /** (undocumented) */
+    shutdown(): Promise<void>
+    /** (undocumented) */
+    forceFlush(): Promise<void>
+    /** (undocumented) */
+    getFinishedLogRecords(): ReadableLogRecord[]
+    /** (undocumented) */
+    reset(): void
+
+  export { InMemoryLogRecordExporter }
+
+opentelemetry__sdk-logs/package/dist/export/LogRecordExporter.d.mts/
+  LogRecordExporter
+    /** (undocumented) */
+    interface LogRecordExporter
+    /**
+     * Called to export {@link ReadableLogRecord}s.
+     * @param logs the list of sampled LogRecords to be exported.
+     */
+    export(logs: ReadableLogRecord[], resultCallback: (result: ExportResult) => void): void
+    /** Stops the exporter. */
+    shutdown(): Promise<void>
+    /**
+     * Finish all pending exports as soon as possible, preferably before
+     * resolving the promise returned.
+     */
+    forceFlush(): Promise<void>
+
+  export { LogRecordExporter }
+
+opentelemetry__sdk-logs/package/dist/export/ReadWriteLogRecord.d.mts/
+  ReadWriteLogRecord
+    /**
+     * A recording of an event. Typically, the record includes a timestamp indicating when the
+     * event happened as well as other data that describes what happened, where it happened, etc.
+     *
+     * @remarks
+     * This interface is **not intended to be implemented by users**.
+     * To produce logs, use {@link Logger#emit}. To consume logs, implement {@link LogRecordProcessor#onEmit}.
+     * ReadWriteLogRecord instances are created and managed by the SDK.
+     */
+    interface ReadWriteLogRecord
+    /** (undocumented) */
+    hrTime: HrTime
+    /** (undocumented) */
+    hrTimeObserved: HrTime
+    /** (undocumented) */
+    spanContext?: SpanContext
+    /** (undocumented) */
+    readonly resource: Resource
+    /**
+     * The instrumentation scope associated with the log record.
+     *
+     * Downstream consumers may group exported records by the identity of this
+     * object. If a distinct grouping is required, construct a new scope object
+     * instead of reusing an existing one.
+     */
+    readonly instrumentationScope: InstrumentationScope
+    /** (undocumented) */
+    readonly attributes: Attributes
+    /** (undocumented) */
+    severityText?: string
+    /** (undocumented) */
+    severityNumber?: SeverityNumber
+    /** (undocumented) */
+    body?: AnyValue
+    /** (undocumented) */
+    eventName?: string
+    /** (undocumented) */
+    droppedAttributesCount: number
+    /**
+     * Sets a single attribute on the log record.
+     * @param key The attribute key.
+     * @param value The attribute value.
+     * @returns The updated ReadWriteLogRecord.
+     */
+    setAttribute(key: string, value?: AnyValue): ReadWriteLogRecord
+    /**
+     * Sets multiple attributes on the log record.
+     * @param attributes The attributes to set.
+     * @returns The updated ReadWriteLogRecord.
+     */
+    setAttributes(attributes: Attributes): ReadWriteLogRecord
+    /**
+     * Sets the body of the log record.
+     * @param body The log body.
+     * @returns The updated ReadWriteLogRecord.
+     */
+    setBody(body: AnyValue): ReadWriteLogRecord
+    /**
+     * Sets the event name for the log record.
+     * @param eventName The event name.
+     * @returns The updated ReadWriteLogRecord.
+     */
+    setEventName(eventName: string): ReadWriteLogRecord
+    /**
+     * Sets the severity number for the log record.
+     * @param severityNumber The severity number.
+     * @returns The updated ReadWriteLogRecord.
+     */
+    setSeverityNumber(severityNumber: SeverityNumber): ReadWriteLogRecord
+    /**
+     * Sets the severity text (log level) for the log record.
+     * @param severityText The severity text.
+     * @returns The updated ReadWriteLogRecord.
+     */
+    setSeverityText(severityText: string): ReadWriteLogRecord
+
+  export { ReadWriteLogRecord }
+
+opentelemetry__sdk-logs/package/dist/export/ReadableLogRecord.d.mts/
+  ReadableLogRecord
+    /** (undocumented) */
+    interface ReadableLogRecord
+    /** (undocumented) */
+    readonly hrTime: HrTime
+    /** (undocumented) */
+    readonly hrTimeObserved: HrTime
+    /** (undocumented) */
+    readonly spanContext?: SpanContext
+    /** (undocumented) */
+    readonly severityText?: string
+    /** (undocumented) */
+    readonly severityNumber?: SeverityNumber
+    /** (undocumented) */
+    readonly body?: AnyValue
+    /** (undocumented) */
+    readonly eventName?: string
+    /** (undocumented) */
+    readonly resource: Resource
+    /**
+     * The instrumentation scope associated with this log record. Identity of this object
+     * MUST be stable across identical scopes, as it is intended be used for efficient scope-based
+     * filtering and grouping.
+     */
+    readonly instrumentationScope: InstrumentationScope & { attributes?: Attributes; droppedAttributesCount?: number; }
+    /** (undocumented) */
+    readonly attributes: Attributes
+    /** (undocumented) */
+    readonly droppedAttributesCount: number
+
+  export { ReadableLogRecord }
+
+opentelemetry__sdk-logs/package/dist/export/SimpleLogRecordProcessor.d.mts/
+  SimpleLogRecordProcessor
+    /**
+     * An implementation of the {@link LogRecordProcessor} interface that exports
+     * each {@link LogRecord} as it is emitted.
+     *
+     * NOTE: This {@link LogRecordProcessor} exports every {@link LogRecord}
+     * individually instead of batching them together, which can cause significant
+     * performance overhead with most exporters. For production use, please consider
+     * using the {@link BatchLogRecordProcessor} instead.
+     */
+    declare class SimpleLogRecordProcessor implements LogRecordProcessor
+    /** (undocumented) */
+    constructor(options: SimpleLogRecordProcessorOptions)
+    /** (undocumented) */
+    onEmit(logRecord: ReadWriteLogRecord, _context?: Context): void
+    /** (undocumented) */
+    forceFlush(): Promise<void>
+    /** (undocumented) */
+    shutdown(): Promise<void>
+
+  export { SimpleLogRecordProcessor }
+
+opentelemetry__sdk-logs/package/dist/index.d.mts/
+  export { BatchLogRecordProcessor, type BatchLogRecordProcessorBrowserOptions, type BatchLogRecordProcessorOptions, ConsoleLogRecordExporter, type ForceFlushOptions, InMemoryLogRecordExporter, type LogRecordExporter, type LogRecordLimits, type LogRecordProcessor, type LogRecordProcessorOptions, type LoggerConfig, type LoggerConfigurator, type LoggerPattern, LoggerProvider, type LoggerProviderOptions, type ReadWriteLogRecord, type ReadableLogRecord, SimpleLogRecordProcessor, createLoggerConfigurator }
+
+opentelemetry__sdk-logs/package/dist/types.d.mts/
+  LoggerConfig
+    /**
+     * A LoggerConfig defines various configurable aspects of a Logger's behavior.
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    interface LoggerConfig
+    /**
+     * A boolean indication of whether the logger is enabled.
+     * If a Logger is disabled, it behaves equivalently to a No-op Logger.
+     * Defaults to true (loggers are enabled by default).
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    enabled?: boolean
+    /**
+     * A SeverityNumber indicating the minimum severity level for log records to be processed.
+     * If not explicitly set, defaults to 0 (UNSPECIFIED).
+     * Log records with a specified severity (i.e. not 0) that is less than this value will be dropped.
+     * Log records with unspecified severity (0) bypass this filter.
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    minimumSeverity?: SeverityNumber
+    /**
+     * A boolean indication of whether the logger should only process log records
+     * associated with sampled traces.
+     * If not explicitly set, defaults to false.
+     * If true, log records associated with unsampled traces will be dropped.
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    traceBased?: boolean
+
+  /**
+   * A LoggerConfigurator is a function which computes the LoggerConfig for a Logger.
+   * It is called when a Logger is first created, and for each outstanding Logger
+   * when a LoggerProvider's LoggerConfigurator is updated (if updating is supported).
+   *
+   * The function must return the complete LoggerConfig for the given logger scope.
+   * All config properties should have their values computed and set to appropriate defaults.
+   *
+   * @param loggerScope - The InstrumentationScope of the Logger
+   * @returns The computed LoggerConfig with all properties set
+   * @experimental This feature is in development as per the OpenTelemetry specification.
+   */
+  type LoggerConfigurator = (loggerScope: InstrumentationScope) => Required<LoggerConfig>
+  ForceFlushOptions
+    /** (undocumented) */
+    interface ForceFlushOptions
+    /**
+     * How long the force flush can run before it is cancelled.
+     * The default value is 30000ms.
+     */
+    timeoutMillis?: number
+
+  LoggerProviderOptions
+    /** (undocumented) */
+    interface LoggerProviderOptions
+    /** Resource associated with trace telemetry */
+    resource?: Resource
+    /** Log Record Limits */
+    logRecordLimits?: LogRecordLimits
+    /** Log Record Processors */
+    processors?: LogRecordProcessor[]
+    /**
+     * A function that computes the LoggerConfig for a given logger.
+     * This is called when a Logger is first created.
+     *
+     * @experimental This feature is in development as per the OpenTelemetry specification.
+     */
+    loggerConfigurator?: LoggerConfigurator
+    /**
+     * A meter provider to record logs SDK metrics to.
+     * @experimental This option is experimental and is subject to breaking changes in minor releases.
+     */
+    meterProvider?: MeterProvider
+
+  LogRecordLimits
+    /** (undocumented) */
+    interface LogRecordLimits
+    /** attributeValueLengthLimit is maximum allowed attribute value size */
+    attributeValueLengthLimit?: number
+    /** attributeCountLimit is number of attributes per LogRecord */
+    attributeCountLimit?: number
+
+  LogRecordProcessorOptions
+    /** Common options for SDK log processors. */
+    interface LogRecordProcessorOptions
+    /**
+     * A meter provider to which to record self-observability log processor metrics.
+     * @experimental This option is experimental and is subject to breaking changes in minor releases.
+     */
+    selfObsMeterProvider?: MeterProvider
+
+  SimpleLogRecordProcessorOptions
+    /** (undocumented) */
+    interface SimpleLogRecordProcessorOptions extends LogRecordProcessorOptions
+    /** (undocumented) */
+    exporter: LogRecordExporter
+
+  BatchLogRecordProcessorOptions
+    /** (undocumented) */
+    interface BatchLogRecordProcessorOptions extends LogRecordProcessorOptions
+    /** (undocumented) */
+    exporter: LogRecordExporter
+    /**
+     * The maximum batch size of every export. It must be smaller or equal to
+     * maxQueueSize. The default value is 512.
+     */
+    maxExportBatchSize?: number
+    /**
+     * The delay interval in milliseconds between two consecutive exports.
+     * The default value is 1000ms.
+     */
+    scheduledDelayMillis?: number
+    /**
+     * How long the export can run before it is cancelled.
+     * The default value is 30000ms
+     */
+    exportTimeoutMillis?: number
+    /**
+     * The maximum queue size. After the size is reached log records are dropped.
+     * The default value is 2048.
+     */
+    maxQueueSize?: number
+    /**
+     * Browser only: disable flush when a user navigates to a new page, closes the tab or the browser, or,
+     * on mobile, switches to a different app. Auto flush is enabled by default.
+     */
+    disableAutoFlushOnDocumentHide?: boolean
+
+  export { BatchLogRecordProcessorBrowserOptions, BatchLogRecordProcessorOptions, ForceFlushOptions, LogRecordLimits, LogRecordProcessorOptions, LoggerConfig, LoggerConfigurator, LoggerProviderOptions, SimpleLogRecordProcessorOptions }
+
+opentelemetry__sdk-logs/package/dist/platform/node/export/BatchLogRecordProcessor.d.mts/
+  BatchLogRecordProcessor
+    /** (undocumented) */
+    declare class BatchLogRecordProcessor extends BatchLogRecordProcessorBase<BatchLogRecordProcessorOptions>
+
+  export { BatchLogRecordProcessor }
+
+opentelemetry__exporter-logs-otlp-http/package/dist/platform/node/OTLPLogExporter.d.mts/
+  OTLPLogExporter
+    /** Collector Logs Exporter for Node */
+    declare class OTLPLogExporter extends OTLPExporterBase<ReadableLogRecord[]> implements LogRecordExporter
+    /** (undocumented) */
+    constructor(config?: OTLPExporterNodeConfigBase)
+
+  export { OTLPLogExporter }
+
+opentelemetry__resources/package/dist/index.d.mts/
+  export { type DetectedResource, type DetectedResourceAttributes, type MaybePromise, type RawResourceAttribute, type Resource, type ResourceDetectionConfig, type ResourceDetector, defaultResource, defaultServiceName, detectResources, emptyResource, envDetector, hostDetector, osDetector, processDetector, resourceFromAttributes, serviceInstanceIdDetector }
+
+opentelemetry__resources/package/dist/Resource.d.mts/
+  Resource
+    /**
+     * An interface that represents a resource. A Resource describes the entity for which signals (metrics or trace) are
+     * collected.
+     *
+     * This interface is NOT user-implementable. Valid ways to obtain a {@link Resource} are by using either of these functions
+     *  - {@link resourceFromAttributes}
+     *  - {@link emptyResource}
+     *  - {@link defaultResource}
+     *  - {@link detectResources}
+     */
+    interface Resource
+    /**
+     * Check if async attributes have resolved. This is useful to avoid awaiting
+     * waitForAsyncAttributes (which will introduce asynchronous behavior) when not necessary.
+     *
+     * @returns true if the resource "attributes" property is not yet settled to its final value
+     */
+    readonly asyncAttributesPending?: boolean
+    /** @returns the Resource's attributes. */
+    readonly attributes: Attributes
+    /** @returns the Resource's schema URL or undefined if not set. */
+    readonly schemaUrl?: string
+    /**
+     * Returns a promise that will never be rejected. Resolves when all async attributes have finished being added to
+     * this Resource's attributes. This is useful in exporters to block until resource detection
+     * has finished.
+     */
+    waitForAsyncAttributes?(): Promise<void>
+    /**
+     * Returns a new, merged {@link Resource} by merging the current Resource
+     * with the other Resource. In case of a collision, other Resource takes
+     * precedence.
+     *
+     * @param other the Resource that will be merged with this.
+     * @returns the newly merged Resource.
+     */
+    merge(other: Resource | null): Resource
+    /** (undocumented) */
+    getRawAttributes(): RawResourceAttribute[]
+
+  export { Resource }
+
+opentelemetry__resources/package/dist/detect-resources.d.mts/
+  /**
+   * Runs all resource detectors and returns the results merged into a single Resource.
+   *
+   * @param config Configuration for resource detection
+   */
+  declare const detectResources: (config?: ResourceDetectionConfig) => Resource
+  export { detectResources }
+
+opentelemetry__resources/package/dist/types.d.mts/
+  ResourceDetector
+    /**
+     * Interface for a Resource Detector.
+     * A resource detector returns a set of detected resource attributes.
+     * A detected resource attribute may be an {@link AnyValue} or a Promise of an AnyValue.
+     * Attributes values that are not "simple" attributes are dropped with a warning.
+     * See OTEP 4485.
+     */
+    interface ResourceDetector
+    /**
+     * Detect resource attributes.
+     *
+     * @returns a {@link DetectedResource} object containing detected resource attributes
+     */
+    detect(config?: ResourceDetectionConfig): DetectedResource
+
+  DetectedResource
+    /** (undocumented) */
+    type DetectedResource
+    /** Detected resource attributes. */
+    attributes?: DetectedResourceAttributes
+
+  /**
+   * An object representing detected resource attributes.
+   * Value may be {@link AnyValue}s, a promise to an {@link AnyValue}, or undefined.
+   */
+  type DetectedResourceAttributeValue = MaybePromise<AnyValue | undefined>
+  /**
+   * An object representing detected resource attributes.
+   * Values may be {@link AnyValue}s or a promise to an {@link AnyValue}.
+   */
+  type DetectedResourceAttributes = Record<string, DetectedResourceAttributeValue>
+  /** (undocumented) */
+  type MaybePromise<T> = T | Promise<T>
+  /** (undocumented) */
+  type RawResourceAttribute = [string, MaybePromise<AnyValue | undefined>]
+  ResourceOptions
+    /** Options for creating a {@link Resource}. */
+    type ResourceOptions
+    /** (undocumented) */
+    schemaUrl?: string
+
+  export { DetectedResource, DetectedResourceAttributes, MaybePromise, RawResourceAttribute, ResourceDetector, ResourceOptions }
+
+opentelemetry__resources/package/dist/config.d.mts/
+  ResourceDetectionConfig
+    /** ResourceDetectionConfig provides an interface for configuring resource auto-detection. */
+    interface ResourceDetectionConfig
+    /** (undocumented) */
+    detectors?: Array<ResourceDetector>
+
+  export { ResourceDetectionConfig }
+
+pino-opentelemetry-transport/package/types/opentelemetry-mapper.d.ts/
+  CommonBindings
+    /** (undocumented) */
+    export type CommonBindings
+    /** (undocumented) */
+    msg?: string | undefined
+    /** (undocumented) */
+    level?: number | undefined
+    /** (undocumented) */
+    time?: number | undefined
+    /** (undocumented) */
+    hostname?: string | undefined
+    /** (undocumented) */
+    pid?: number | undefined
+
+  /** (undocumented) */
+  export type Bindings = Record<string, string | number | Object> & CommonBindings
+  MapperOptions
+    /** Converts a pino log object to an OpenTelemetry log object. */
+    export type MapperOptions
+    /** (undocumented) */
+    messageKey: string
+    /** (undocumented) */
+    levels: import("pino").LevelMapping
+    /** (undocumented) */
+    severityNumberMap?: { [x: number]: number; } | undefined
+
+  /**
+   * If the source format has only a single severity that matches the meaning of the range
+   * then it is recommended to assign that severity the smallest value of the range.
+   * https://github.com/open-telemetry/opentelemetry-specification/blob/fc8289b8879f3a37e1eba5b4e445c94e74b20359/specification/logs/data-model.md#mapping-of-severitynumber
+   */
+  export const DEFAULT_SEVERITY_NUMBER_MAP: { 10: number; 20: number; 30: number; 40: number; 50: number; 60: number; }
+  /**
+   * Converts a pino log object to an OpenTelemetry log object.
+   *
+   * @typedef {Object} MapperOptions
+   * @property {string} messageKey
+   * @property {import('pino').LevelMapping} levels
+   * @property {Object.<number, number>} [severityNumberMap]
+   *
+   * @param {Bindings} sourceObject
+   * @param {MapperOptions} mapperOptions
+   * @returns {import('@opentelemetry/api-logs').LogRecord}
+   */
+  export function toOpenTelemetry(sourceObject: Bindings, { messageKey, levels, severityNumberMap }: MapperOptions): import("@opentelemetry/api-logs").LogRecord
+
+pino-opentelemetry-transport/package/types/otlp-logger-shim.d.ts/
+  /** (undocumented) */
+  export type RecordProcessorType = "batch" | "simple"
+  LogRecordProcessorOptions
+    /** (undocumented) */
+    export type LogRecordProcessorOptions
+    /** (undocumented) */
+    recordProcessorType: RecordProcessorType
+    /** (undocumented) */
+    exporterOptions?: ExporterOptions | undefined
+    /** (undocumented) */
+    processorConfig?: Omit<import("@opentelemetry/sdk-logs").BatchLogRecordProcessorOptions, "exporter"> | undefined
+
+  GrpcExporterOptions
+    /** (undocumented) */
+    export type GrpcExporterOptions
+    /** (undocumented) */
+    protocol: "grpc"
+    /** (undocumented) */
+    grpcExporterOptions?: import("@opentelemetry/otlp-grpc-exporter-base").OTLPGRPCExporterConfigNode | undefined
+
+  HttpExporterOptions
+    /** (undocumented) */
+    export type HttpExporterOptions
+    /** (undocumented) */
+    protocol: "http"
+    /** (undocumented) */
+    httpExporterOptions?: import("@opentelemetry/otlp-exporter-base").OTLPExporterNodeConfigBase | undefined
+
+  ProtobufExporterOptions
+    /** (undocumented) */
+    export type ProtobufExporterOptions
+    /** (undocumented) */
+    protocol: "http/protobuf"
+    /** (undocumented) */
+    protobufExporterOptions?: import("@opentelemetry/otlp-exporter-base").OTLPExporterNodeConfigBase | undefined
+
+  ConsoleExporterOptions
+    /** (undocumented) */
+    export type ConsoleExporterOptions
+    /** (undocumented) */
+    protocol: "console"
+
+  /** (undocumented) */
+  export type ExporterOptions = GrpcExporterOptions | HttpExporterOptions | ProtobufExporterOptions | ConsoleExporterOptions
+  OtlpLoggerOptions
+    /** (undocumented) */
+    export type OtlpLoggerOptions
+    /** (undocumented) */
+    loggerName: string
+    /** (undocumented) */
+    serviceVersion: string
+    /** (undocumented) */
+    logRecordProcessorOptions?: LogRecordProcessorOptions | LogRecordProcessorOptions[] | undefined
+    /** (undocumented) */
+    resourceAttributes?: Object | undefined
+
+  /**
+   * @typedef {Object} OtlpLoggerOptions
+   * @property {string} loggerName
+   * @property {string} serviceVersion
+   * @property {LogRecordProcessorOptions | LogRecordProcessorOptions[]} [logRecordProcessorOptions]
+   * @property {Object} [resourceAttributes={}]
+   *
+   * @param {OtlpLoggerOptions} opts
+   * @returns {{ emit: (obj: import('@opentelemetry/api-logs').LogRecord) => void, shutdown: () => Promise<void> }}
+   */
+  export function getOtlpLogger(opts: OtlpLoggerOptions): { emit: (obj: import("@opentelemetry/api-logs").LogRecord) => void; shutdown: () => Promise<void>; }
+  /**
+   * @typedef {"batch" | "simple"} RecordProcessorType
+   *
+   * @typedef {Object} LogRecordProcessorOptions
+   * @property {RecordProcessorType} recordProcessorType
+   * @property {ExporterOptions} [exporterOptions]
+   * @property {Omit<import('@opentelemetry/sdk-logs').BatchLogRecordProcessorOptions, 'exporter'>} [processorConfig]
+   *
+   * @typedef {Object} GrpcExporterOptions
+   * @property {"grpc"} protocol
+   * @property {import('@opentelemetry/otlp-grpc-exporter-base').OTLPGRPCExporterConfigNode} [grpcExporterOptions]
+   *
+   * @typedef {Object} HttpExporterOptions
+   * @property {"http"} protocol
+   * @property {import('@opentelemetry/otlp-exporter-base').OTLPExporterNodeConfigBase} [httpExporterOptions]
+   *
+   * @typedef {Object} ProtobufExporterOptions
+   * @property {"http/protobuf"} protocol
+   * @property {import('@opentelemetry/otlp-exporter-base').OTLPExporterNodeConfigBase} [protobufExporterOptions]
+   *
+   * @typedef {Object} ConsoleExporterOptions
+   * @property {"console"} protocol
+   *
+   * @typedef {GrpcExporterOptions | HttpExporterOptions | ProtobufExporterOptions | ConsoleExporterOptions} ExporterOptions
+   *
+   * @param {ExporterOptions} exporterOptions
+   * @returns {import('@opentelemetry/sdk-logs').LogRecordExporter}
+   */
+  export function createExporter(exporterOptions: ExporterOptions): import("@opentelemetry/sdk-logs").LogRecordExporter
+  /**
+   * @param {LogRecordProcessorOptions} [opts]
+   * @returns {import('@opentelemetry/sdk-logs').LogRecordProcessor}
+   */
+  export function createLogProcessor(opts?: LogRecordProcessorOptions): import("@opentelemetry/sdk-logs").LogRecordProcessor
+  /**
+   * Load context from attributes and set it to logRecord.context
+   *
+   * @param {import('@opentelemetry/api-logs').LogRecord} logRecord
+   * @returns {import('@opentelemetry/api-logs').LogRecord}
+   */
+  export function loadContext(logRecord: import("@opentelemetry/api-logs").LogRecord): import("@opentelemetry/api-logs").LogRecord
+
+pino-opentelemetry-transport/package/types/pino-opentelemetry-transport.d.ts/
+  _exports/
+    /** (undocumented) */
+    export { PinoOptions, Options }
+
+  /** (undocumented) */
+  declare function _exports({ severityNumberMap, ...loggerOpts }?: Options): Promise<import("node:stream").Transform & build.OnUnknown>
+  export = _exports
+  PinoOptions
+    /** Pino OpenTelemetry transport */
+    type PinoOptions
+    /** (undocumented) */
+    severityNumberMap?: { [x: number]: number; } | undefined
+
+  /** Pino OpenTelemetry transport */
+  type Options = import("./otlp-logger-shim").OtlpLoggerOptions & PinoOptions
+
+opentelemetry__instrumentation-pino/package/dist/instrumentation.d.mts/
+  PinoInstrumentation
+    /** (undocumented) */
+    export declare class PinoInstrumentation extends InstrumentationBase<PinoInstrumentationConfig>
+    /** (undocumented) */
+    constructor(config?: PinoInstrumentationConfig)
+
+opentelemetry__instrumentation-pino/package/dist/types.d.mts/
+  /** (undocumented) */
+  export type LogHookFunction = (span: Span, record: Record<string, any>, level?: number) => void
+  PinoInstrumentationConfig
+    /** (undocumented) */
+    export interface PinoInstrumentationConfig extends InstrumentationConfig
+    /**
+     * Whether to disable the automatic sending of log records to the
+     * OpenTelemetry Logs SDK.
+     * @default false
+     */
+    disableLogSending?: boolean
+    /**
+     * Whether to disable the injection trace-context fields, and possibly other
+     * fields from `logHook()`, into log records for log correlation.
+     * @default false
+     */
+    disableLogCorrelation?: boolean
+    /**
+     * A function that allows injecting additional fields in log records. It is
+     * called, as `logHook(span, record)`, for each log record emitted in a valid
+     * span context. It requires `disableLogCorrelation` to be false.
+     */
+    logHook?: LogHookFunction
+    /**
+     * Configure the names of field injected into logs when there is span context
+     * available.
+     */
+    logKeys?: { traceId: string; spanId: string; traceFlags: string; }
+

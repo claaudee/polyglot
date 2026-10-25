@@ -1,0 +1,102 @@
+# picocolors 1.1.1
+Source: https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz
+Collected: 2026-10-24
+Scope: full public API
+Declarations: 4
+
+picocolors.d.ts/
+  /** (undocumented) */
+  declare const picocolors: Colors & { createColors: (enabled?: boolean) => Colors }
+  export = picocolors
+
+types.d.ts/
+  /** (undocumented) */
+  export type Formatter = (input: string | number | null | undefined) => string
+  Colors
+    /** (undocumented) */
+    export interface Colors
+    /** (undocumented) */
+    isColorSupported: boolean
+    /** (undocumented) */
+    reset: Formatter
+    /** (undocumented) */
+    bold: Formatter
+    /** (undocumented) */
+    dim: Formatter
+    /** (undocumented) */
+    italic: Formatter
+    /** (undocumented) */
+    underline: Formatter
+    /** (undocumented) */
+    inverse: Formatter
+    /** (undocumented) */
+    hidden: Formatter
+    /** (undocumented) */
+    strikethrough: Formatter
+    /** (undocumented) */
+    black: Formatter
+    /** (undocumented) */
+    red: Formatter
+    /** (undocumented) */
+    green: Formatter
+    /** (undocumented) */
+    yellow: Formatter
+    /** (undocumented) */
+    blue: Formatter
+    /** (undocumented) */
+    magenta: Formatter
+    /** (undocumented) */
+    cyan: Formatter
+    /** (undocumented) */
+    white: Formatter
+    /** (undocumented) */
+    gray: Formatter
+    /** (undocumented) */
+    bgBlack: Formatter
+    /** (undocumented) */
+    bgRed: Formatter
+    /** (undocumented) */
+    bgGreen: Formatter
+    /** (undocumented) */
+    bgYellow: Formatter
+    /** (undocumented) */
+    bgBlue: Formatter
+    /** (undocumented) */
+    bgMagenta: Formatter
+    /** (undocumented) */
+    bgCyan: Formatter
+    /** (undocumented) */
+    bgWhite: Formatter
+    /** (undocumented) */
+    blackBright: Formatter
+    /** (undocumented) */
+    redBright: Formatter
+    /** (undocumented) */
+    greenBright: Formatter
+    /** (undocumented) */
+    yellowBright: Formatter
+    /** (undocumented) */
+    blueBright: Formatter
+    /** (undocumented) */
+    magentaBright: Formatter
+    /** (undocumented) */
+    cyanBright: Formatter
+    /** (undocumented) */
+    whiteBright: Formatter
+    /** (undocumented) */
+    bgBlackBright: Formatter
+    /** (undocumented) */
+    bgRedBright: Formatter
+    /** (undocumented) */
+    bgGreenBright: Formatter
+    /** (undocumented) */
+    bgYellowBright: Formatter
+    /** (undocumented) */
+    bgBlueBright: Formatter
+    /** (undocumented) */
+    bgMagentaBright: Formatter
+    /** (undocumented) */
+    bgCyanBright: Formatter
+    /** (undocumented) */
+    bgWhiteBright: Formatter
+
